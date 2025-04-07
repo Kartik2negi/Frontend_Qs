@@ -14,7 +14,6 @@ function twoSum(arr,t){
         }
         seen.set(arr[i],i);
     }
-    return pair;
 }
 
 console.log(twoSum(nums,target))
