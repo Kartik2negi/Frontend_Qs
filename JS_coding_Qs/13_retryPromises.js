@@ -31,7 +31,7 @@ function retryPromise(fn,retry,delay){
                     reject(err)
                 }else{
                     setTimeout(()=>{
-                        track(n-1)
+                      attempt(n-1)
                     },delay)
                 }
             })
