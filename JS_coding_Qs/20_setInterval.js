@@ -7,9 +7,10 @@
 
         function repeat() {
             intervalMap[id] = setTimeout(() => {
-                cb(...args);
-                clearTimeout(intervalMap[id]);
-                delete intervalMap[id];
+                cb(...args)
+                if (intervalMap[id]) {
+                    repeat();
+                }
             }, delay)
         }
         repeat();
