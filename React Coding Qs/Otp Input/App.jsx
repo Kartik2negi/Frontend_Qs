@@ -14,7 +14,7 @@ const OTP = ({ length, onComplete }) => {
 
         setOtp(newOtp);
 
-        if (val && index < length - 1) inputRef.current[index + 1].focus();
+        if (value && index < length - 1) inputRef.current[index + 1].focus();
 
         if (newOtp.join('').length === length) onComplete?.(newOtp.join(''));
     };
