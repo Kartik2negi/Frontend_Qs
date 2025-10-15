@@ -20,11 +20,11 @@ const items = [
 ];
 
 const Accordion = ({ items, variant }) => {
-    const [openItem, setOpenItem] = useState(variant === 'single' ? null : []);
+    const [openItem, setOpenItem] = useState([]);
 
     const handleClick = (id) => {
         if (variant === 'single') {
-            setOpenItem(openItem !== id ? id : null);
+            setOpenItem((prev) => (prev.includes(id) ? [] : [...id]));
         } else {
             setOpenItem((prev) =>
                 prev.includes(id) ? prev.filter((el) => el !== id) : [...openItem, id]
@@ -55,21 +55,11 @@ const Accordion = ({ items, variant }) => {
                             onClick={() => handleClick(ele.id)}
                         >
                             <span>{ele.title}</span>
-                            <span>
-                                {(
-                                    variant === 'single'
-                                        ? openItem === ele.id
-                                        : openItem.includes(ele.id)
-                                )
-                                    ? '▼'
-                                    : '▲'}
-                            </span>
+                            <span>{openItem.includes(ele.id) ? '▼' : '▲'}</span>
                         </div>
-                        {(variant === 'single'
-                            ? openItem === ele.id
-                            : openItem.includes(ele.id)) && (
-                                <div style={{ padding: 10 }}>{ele.content}</div>
-                            )}
+                        {openItem.includes(ele.id) && (
+                            <div style={{ padding: 10 }}>{ele.content}</div>
+                        )}
                     </div>
                 );
             })}
