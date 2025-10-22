@@ -39,7 +39,7 @@ export default function InfiniteScrollObserver() {
     }, []);
 
     useEffect(() => {
-        // core logic for scoll
+        // core logic for scroll
         const observer = new IntersectionObserver(
             (entries) => {
                 const first = entries[0];
