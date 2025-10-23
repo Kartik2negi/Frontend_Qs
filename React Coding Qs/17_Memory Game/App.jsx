@@ -35,7 +35,7 @@ const MemoryGame = () => {
     initializeGame();
   }, [gridSize]);
 
-  const   checkMatch = (secondId) => {
+  const checkMatch = (secondId) => {
     const [firstId] = flipped;
     if (cards[firstId].number === cards[secondId].number) {
       setSolved([...solved, firstId, secondId]);
