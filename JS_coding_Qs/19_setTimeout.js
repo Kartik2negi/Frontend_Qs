@@ -27,6 +27,11 @@
 
     window.mySetTimeout = mySetTimeout;
     window.myClearTimeout = myClearTimeout;
+
+    // ✅ Works in Node.js and browsers
+    // globalThis.mySetTimeout = mySetTimeout;
+    // globalThis.myClearTimeout = myClearTimeout;
+
 })()
 
 let taskId = mySetTimeout(() => {
