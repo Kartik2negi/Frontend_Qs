@@ -27,7 +27,10 @@
     window.mySetInterval = mySetInterval;
     window.myClearInterval = myClearInterval;
 
-    
+    // ✅ Works in Node.js and browsers
+    globalThis.mySetInterval = mySetInterval;
+    globalThis.myClearInterval = myClearInterval;
+
 
 })()
 
