@@ -15,7 +15,7 @@ export const ThemeProvider = ({ children }) => {
 
     // save to localStorage whenever theme changes
     useEffect(() => {
-        localStorage.setItem('theme', 'light');
+        localStorage.setItem('theme', theme);
     }, [theme]);
 
     const toggleTheme = () => {
