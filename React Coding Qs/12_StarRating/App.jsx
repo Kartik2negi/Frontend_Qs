@@ -35,7 +35,7 @@ const StarRating = ({ totalStar, value, onClick }) => {
         return (
           <Star
             onClick={() => handleClick(starValue)}
-            filled={starValue <= (value || hover)}
+            filled={starValue <= (hover || value)}
             onMouseEnter={() => setHover(starValue)}
             onMouseLeave={() => setHover(0)}
           />
