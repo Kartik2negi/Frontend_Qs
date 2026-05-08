@@ -113,16 +113,8 @@ const folderData1 = [
   },
 ];
 
-const Folder1 = ({ data }) => {
-  const [expand, setExpand] = useState({});
+const Folder1 = ({ data,expand,toggle }) => {
 
-  const toggle = (id) => {
-    setExpand((prev) => {
-      const newState = { ...prev, [id]: !prev[id] };
-      return newState;
-    });
-  };
-  console.log(expand);
   return (
     <div>
       {data.map((node) => {
@@ -136,7 +128,7 @@ const Folder1 = ({ data }) => {
               {node.isFolder ? (isExpand ? '📂' : '📁') : '📄'} {node.name}
             </div>
             {isExpand && node.children?.length > 0 && (
-              <Folder1 data={node.children} />
+              <Folder1 data={node.children} expand={expand} toggle={toggle} />
             )}
           </div>
         );
@@ -146,9 +138,17 @@ const Folder1 = ({ data }) => {
 };
 
 export default function App() {
+  const [expand, setExpand] = useState({});
+
+  const toggle = (id) => {
+    setExpand((prev) => {
+      const newState = { ...prev, [id]: !prev[id] };
+      return newState;
+    });
+  };
   return (
     <div>
-      <Folder1 data={folderData1} />
+      <Folder1 data={folderData1} expand={expand} toggle={toggle} />
     </div>
   );
 }
