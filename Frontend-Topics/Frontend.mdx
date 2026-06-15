@@ -1,4 +1,116 @@
-# Complete React/Next.js Interview Preparation Guide (4+ Years)
+## 📑 Quick Navigation - Table of Contents
+
+### Core JavaScript
+- [1.1 Closures](#11-closures)
+- [1.2 Event Loop](#12-event-loop)
+- [1.3 Microtask vs Macrotask](#13-microtask-vs-macrotask)
+- [1.4 Hoisting](#14-hoisting)
+- [1.5 Temporal Dead Zone](#15-temporal-dead-zone-tdz)
+- [1.6 Call, Apply, Bind](#16-call-apply-bind)
+- [1.7 Debounce](#17-debounce)
+- [1.8 Throttle](#18-throttle)
+- [1.9 Currying](#19-currying)
+- [1.10 Deep Copy vs Shallow Copy](#110-deep-copy-vs-shallow-copy)
+- [1.11 Memory Leaks](#111-memory-leaks-in-javascript)
+- [1.12 Async/Await](#112-asyncawait)
+
+### Browser Fundamentals
+- [2.1 Critical Rendering Path](#21-critical-rendering-path-crp)
+- [2.2 Reflow vs Repaint](#22-reflow-vs-repaint)
+- [2.3 What Blocks Rendering](#23-what-blocks-rendering)
+- [2.4 Browser Storage](#24-browser-storage)
+
+### React Concepts
+- [3.1 React Fiber](#31-react-fiber)
+- [3.2 Reconciliation](#32-reconciliation)
+- [3.3 Virtual DOM](#33-virtual-dom)
+- [3.4 Rendering Lifecycle](#34-rendering-lifecycle)
+- [3.5 React.memo](#35-reactmemo)
+- [3.6 useMemo](#36-usememo)
+- [3.7 useCallback](#37-usecallback)
+- [3.8 React.lazy & Suspense](#38-reactlazy--suspense)
+- [3.9 Stale Closures](#39-stale-closures)
+- [3.10 Controlled vs Uncontrolled](#310-controlled-vs-uncontrolled-components)
+- [3.11 Custom Hooks](#311-custom-hooks)
+
+### Performance Optimization
+- [4.1 Why Component Rerendering](#41-why-component-rerendering)
+- [4.2 React DevTools Profiler](#42-react-devtools-profiler)
+- [4.3 Bundle Optimization](#43-bundle-optimization)
+- [4.4 Virtualization](#44-virtualization)
+- [4.5 Image Optimization](#45-image-optimization)
+- [4.6 Memoization Strategy](#46-memoization-strategy)
+
+### State Management
+- [5.1 Redux](#51-redux)
+- [5.2 Redux Toolkit](#52-redux-toolkit)
+- [5.3 Zustand](#53-zustand)
+- [5.4 Recoil](#54-recoil)
+- [5.5 Context API](#55-context-api)
+- [5.6 Comparison Table](#56-comparison-table)
+
+### Next.js
+- [6.1 Rendering Methods (SSR, SSG, ISR, CSR)](#61-rendering-methods)
+- [6.2 Hydration](#62-hydration)
+- [6.3 Hydration Mismatch](#63-hydration-mismatch)
+- [6.4 App Router](#64-app-router)
+- [6.5 Server Components](#65-server-components)
+- [6.6 Client Components](#66-client-components)
+- [6.7 Data Fetching](#67-data-fetching-in-nextjs)
+- [6.8 Next.js Caching](#68-nextjs-caching)
+
+### Advanced Topics
+- [7.1 React Router](#71-react-router)
+- [7.2 Next.js Routing](#72-nextjs-routing)
+- [8.1 XSS](#81-xss-cross-site-scripting)
+- [8.2 CSRF](#82-csrf-cross-site-request-forgery)
+- [8.3 JWT Security](#83-jwt-security)
+- [8.4 CORS](#84-cors)
+- [8.5 Sensitive Data](#85-sensitive-data-exposure)
+- [9.1 Input Validation](#91-input-validation--sanitization)
+- [10.1 GraphQL Basics](#101-basics)
+- [10.2 GraphQL vs REST](#102-advantages-over-rest)
+- [10.3 N+1 Problem](#103-n1-problem)
+- [10.4 Caching](#104-caching)
+- [10.5 Apollo Client](#105-apollo-client)
+
+### TypeScript Mastery
+- [11.1 Interface vs Type](#111-interface-vs-type)
+- [11.2 Generics](#112-generics)
+- [11.3 Generic Constraints](#113-generic-constraints)
+- [11.4 Utility Types](#114-utility-types)
+- [11.5 keyof and typeof](#115-keyof-and-typeof)
+- [11.6 Unknown vs Any](#116-unknown-vs-any)
+
+### Additional Topics
+- [12.1 Headless CMS](#121-headless-cms-concept)
+- [12.2 Why Strapi](#122-why-strapi)
+- [12.3 Strapi + Next.js](#123-strapi--nextjs-flow)
+- [13.1 RTL](#131-rtl-react-testing-library)
+- [13.2 Jest/Vitest](#132-jestvitest)
+- [13.3 Mocking APIs](#133-mocking-apis)
+- [13.4 MSW](#134-msw-mock-service-worker)
+- [13.5 Unit vs Integration vs E2E](#135-unit-vs-integration-vs-e2e)
+
+### Practical Implementations
+- [14.1 Debounce Search](#141-debounce-search)
+- [14.2 Infinite Scroll](#142-infinite-scroll)
+- [14.3 Modal](#143-modal)
+- [14.4 Accordion](#144-accordion)
+- [14.5 useDebounce Hook](#145-usedebounce-hook)
+- [14.6 useThrottle Hook](#146-usethrottle-hook)
+- [14.7 useFetch Hook](#147-usefetch-hook)
+
+### System Design
+- [15.1 Product Listing Page](#151-design-product-listing-page)
+- [15.2 Dashboard](#152-design-dashboard)
+- [15.3 Notification System](#153-design-notification-system)
+- [15.4 Component Library](#154-design-reusable-component-library)
+
+### Top 20 Questions
+- [Question 1-20](#top-20-most-asked-questions)
+
+---
 
 ---
 
@@ -10,7 +122,7 @@
 
 A closure is a function that has access to variables from another function's scope. This is possible because functions in JavaScript create closures around the data they need to work with.
 
-```js
+```javascript
 function outer(x) {
   function inner(y) {
     return x + y; // inner function accesses x from outer function
@@ -25,8 +137,8 @@ console.log(add5(3)); // 8
 
 **Real-world Use Cases:**
 
-1. **Data Encapsulation (Private Variables)**
-```js
+#### 1. **Data Encapsulation (Private Variables)**
+```javascript
 function createCounter() {
   let count = 0; // private variable
   return {
@@ -43,8 +155,8 @@ console.log(counter.getCount()); // 2
 // count cannot be accessed directly - it's private
 ```
 
-2. **Function Factory Pattern**
-```js
+#### 2. **Function Factory Pattern**
+```javascript
 function createMultiplier(multiplier) {
   return function(number) {
     return number * multiplier;
@@ -57,8 +169,8 @@ console.log(double(5)); // 10
 console.log(triple(5)); // 15
 ```
 
-3. **Module Pattern**
-```js
+#### 3. **Module Pattern**
+```javascript
 const module = (function() {
   const privateVar = "secret";
   
@@ -70,8 +182,8 @@ const module = (function() {
 })();
 ```
 
-4. **Callbacks and Event Handlers**
-```js
+#### 4. **Callbacks and Event Handlers**
+```javascript
 function setupButton(buttonId, userId) {
   const button = document.getElementById(buttonId);
   button.addEventListener('click', function() {
@@ -85,7 +197,7 @@ function setupButton(buttonId, userId) {
 
 Closures can cause memory leaks if they hold references to large objects or the DOM when they're no longer needed.
 
-```js
+```javascript
 function problematicClosure() {
   const largeData = new Array(1000000).fill('data'); // Large object
   
@@ -100,7 +212,7 @@ const fn = problematicClosure();
 ```
 
 **Solution: Clear references**
-```js
+```javascript
 function betterClosure() {
   let largeData = new Array(1000000).fill('data');
   
@@ -117,8 +229,9 @@ function betterClosure() {
 
 The Event Loop is JavaScript's mechanism for handling asynchronous operations in a single-threaded environment.
 
-**Output Example:**
-```js
+**Output Example - What will be printed?**
+
+```javascript
 console.log(1);              // Call Stack → Output: 1
 
 setTimeout(() => console.log(2)); // Goes to Web API, then Macrotask Queue
@@ -127,7 +240,7 @@ Promise.resolve().then(() => console.log(3)); // Goes to Microtask Queue
 
 console.log(4);              // Call Stack → Output: 4
 
-// Output:
+// Expected Output:
 // 1
 // 4
 // 3
@@ -136,9 +249,9 @@ console.log(4);              // Call Stack → Output: 4
 
 **Explanation:**
 
-1. Synchronous code executes first (1, then 4)
-2. Microtasks execute next (Promise - 3)
-3. Macrotasks execute last (setTimeout - 2)
+1. **Synchronous code** executes first (1, then 4)
+2. **Microtasks** execute next (Promise - 3)
+3. **Macrotasks** execute last (setTimeout - 2)
 
 **Detailed Flow:**
 
@@ -158,7 +271,7 @@ console.log(4);              // Call Stack → Output: 4
 ```
 
 **More Complex Example:**
-```js
+```javascript
 console.log('Start');
 
 setTimeout(() => {
@@ -193,7 +306,7 @@ console.log('End');
 
 **Macrotasks** execute after rendering.
 
-```js
+```javascript
 // MICROTASKS (High Priority)
 - Promise.resolve().then()
 - queueMicrotask()
@@ -210,7 +323,7 @@ console.log('End');
 ```
 
 **Priority Example:**
-```js
+```javascript
 console.log('1: Sync');
 
 setTimeout(() => console.log('2: setTimeout'), 0);
@@ -236,7 +349,7 @@ console.log('5: Sync');
 Hoisting is JavaScript's behavior of moving declarations to the top of their scope.
 
 **var Hoisting:**
-```js
+```javascript
 console.log(a); // undefined (not ReferenceError)
 var a = 10;
 console.log(a); // 10
@@ -249,7 +362,7 @@ console.log(a); // 10
 ```
 
 **Function Hoisting:**
-```js
+```javascript
 sayHi(); // "Hello" - works fine
 
 function sayHi() {
@@ -260,7 +373,7 @@ function sayHi() {
 ```
 
 **let and const do NOT hoist the same way:**
-```js
+```javascript
 console.log(b); // ReferenceError
 let b = 10;
 ```
@@ -271,7 +384,7 @@ let b = 10;
 
 Variables declared with `let` and `const` are hoisted but not initialized. They exist in a "Temporal Dead Zone" from the start of the block until the declaration.
 
-```js
+```javascript
 console.log(x); // ReferenceError: Cannot access 'x' before initialization
 let x = 10;
 
@@ -279,7 +392,7 @@ let x = 10;
 ```
 
 **TDZ with Function Parameters:**
-```js
+```javascript
 function test(a = b, b) {
   // b is still in TDZ when default value of a is evaluated
 }
@@ -293,7 +406,7 @@ test(undefined, 1); // ReferenceError
 These methods are used to control what `this` refers to.
 
 **call()** - Invokes function immediately with specified `this`
-```js
+```javascript
 function greet(greeting) {
   return `${greeting}, ${this.name}`;
 }
@@ -303,18 +416,18 @@ console.log(greet.call(person, 'Hello')); // Hello, John
 ```
 
 **apply()** - Same as call but takes arguments as array
-```js
+```javascript
 greet.apply(person, ['Hi']); // Hi, John
 ```
 
 **bind()** - Returns new function with bound `this`
-```js
+```javascript
 const boundGreet = greet.bind(person);
 boundGreet('Hey'); // Hey, John
 ```
 
 **Implement Custom bind():**
-```js
+```javascript
 Function.prototype.customBind = function(context, ...args) {
   const originalFunc = this;
   
@@ -334,7 +447,7 @@ console.log(boundGreet()); // Hello, John
 
 Debounce delays function execution until after a specified time has passed since the last invocation.
 
-```js
+```javascript
 function debounce(func, delay) {
   let timeoutId;
   
@@ -362,7 +475,7 @@ debouncedSearch('react'); // This executes after 500ms
 
 Throttle ensures function executes at most once every specified time interval.
 
-```js
+```javascript
 function throttle(func, limit) {
   let inThrottle;
   
@@ -396,7 +509,7 @@ window.addEventListener('scroll', throttledScroll);
 
 Currying transforms a function with multiple arguments into a chain of functions with single arguments.
 
-```js
+```javascript
 // Regular function
 function sum(a, b, c) {
   return a + b + c;
@@ -419,7 +532,7 @@ console.log(curriedAdd(1)(2)(3)); // 6
 ```
 
 **Generic Currying Function:**
-```js
+```javascript
 function curry(fn) {
   return function curried(...args) {
     if (args.length >= fn.length) {
@@ -446,7 +559,7 @@ console.log(curriedAdd(1, 2)(3)); // 6
 
 **Shallow Copy:** Copies only the top level. Nested objects are still referenced.
 
-```js
+```javascript
 const original = {
   name: 'John',
   address: { city: 'NYC' }
@@ -459,8 +572,8 @@ shallow.address.city = 'LA'; // original.address.city becomes 'LA' (problem!)
 
 **Deep Copy:** Copies everything recursively.
 
-```js
-// Method 1: structuredClone (recommended)
+```javascript
+// Method 1: structuredClone (recommended - modern browsers)
 const deep = structuredClone(original);
 deep.address.city = 'LA'; // original stays unchanged
 
@@ -489,8 +602,8 @@ function deepCopy(obj) {
 
 **Common Causes:**
 
-1. **Event Listeners Not Removed**
-```js
+#### 1. **Event Listeners Not Removed**
+```javascript
 function setup() {
   const element = document.getElementById('btn');
   element.addEventListener('click', handler);
@@ -508,8 +621,8 @@ function setup() {
 }
 ```
 
-2. **Timers Not Cleared**
-```js
+#### 2. **Timers Not Cleared**
+```javascript
 // Bad
 setInterval(() => doSomething(), 1000); // Never stops
 
@@ -518,8 +631,8 @@ const intervalId = setInterval(() => doSomething(), 1000);
 clearInterval(intervalId); // Clean up when done
 ```
 
-3. **Closures Holding Large Objects**
-```js
+#### 3. **Closures Holding Large Objects**
+```javascript
 function createHandler() {
   const largeData = new Array(1000000).fill('data');
   
@@ -529,8 +642,8 @@ function createHandler() {
 }
 ```
 
-4. **Detached DOM Nodes**
-```js
+#### 4. **Detached DOM Nodes**
+```javascript
 // Bad
 let detachedNode = document.getElementById('node');
 document.body.removeChild(detachedNode);
@@ -542,8 +655,8 @@ document.body.removeChild(node);
 node = null; // Release reference
 ```
 
-5. **Global Variables**
-```js
+#### 5. **Global Variables**
+```javascript
 // Bad
 window.cache = []; // Global cache grows indefinitely
 
@@ -558,7 +671,7 @@ const cache = []; // Scoped variable
 
 Modern way to handle asynchronous code.
 
-```js
+```javascript
 // Basic usage
 async function fetchUser(id) {
   try {
@@ -573,7 +686,7 @@ async function fetchUser(id) {
 
 **Promise APIs:**
 
-```js
+```javascript
 // Promise.all - waits for all, fails if any rejects
 const results = await Promise.all([
   fetch('/api/user'),
@@ -603,7 +716,7 @@ const result = await Promise.any([
 ```
 
 **Error Handling:**
-```js
+```javascript
 async function handleErrors() {
   try {
     const data = await fetch('/api/data').then(r => r.json());
@@ -698,7 +811,7 @@ Page visible
 - Less expensive
 - Doesn't affect layout
 
-```js
+```javascript
 element.style.color = 'red'; // Repaint
 element.style.visibility = 'hidden'; // Repaint
 ```
@@ -708,14 +821,14 @@ element.style.visibility = 'hidden'; // Repaint
 - Expensive (recalculates entire layout)
 - Causes repaint as well
 
-```js
+```javascript
 element.style.width = '200px'; // Reflow + Repaint
 element.style.height = '100px'; // Reflow + Repaint
 element.style.margin = '10px'; // Reflow + Repaint
 ```
 
 **Minimize Reflows:**
-```js
+```javascript
 // Bad - multiple reflows
 element.style.width = '100px';
 element.style.height = '100px';
@@ -735,7 +848,7 @@ element.classList.add('styled');
 ```
 
 **Forced Reflow:**
-```js
+```javascript
 // Bad - forces reflow in loop
 for (let i = 0; i < 1000; i++) {
   elements[i].style.width = elements[i].offsetWidth + 10 + 'px';
@@ -803,7 +916,7 @@ elements.forEach((el, i) => {
 | **IndexedDB** | ~50MB+ | Same-origin | Persistent | Async |
 
 **localStorage:**
-```js
+```javascript
 // Persistent across sessions
 localStorage.setItem('user', JSON.stringify({ name: 'John' }));
 const user = JSON.parse(localStorage.getItem('user'));
@@ -812,14 +925,14 @@ localStorage.clear();
 ```
 
 **sessionStorage:**
-```js
+```javascript
 // Cleared when tab closes
 sessionStorage.setItem('temp', 'data');
 // Cleared when browser closes
 ```
 
 **Cookies:**
-```js
+```javascript
 // Set
 document.cookie = "user=John; path=/; max-age=3600";
 
@@ -831,7 +944,7 @@ document.cookie = "user=; max-age=0";
 ```
 
 **IndexedDB:**
-```js
+```javascript
 // Asynchronous, for large data
 const request = indexedDB.open('mydb', 1);
 request.onupgradeneeded = (e) => {
@@ -855,7 +968,7 @@ request.onsuccess = (e) => {
 React Fiber was introduced to solve the problem of long-running JavaScript blocking the main thread. The old reconciliation algorithm was synchronous and couldn't be interrupted.
 
 **Problems with Old System:**
-```js
+```javascript
 // Old: Synchronous rendering
 // If rendering takes 20ms and there's a user input, 
 // the input waits 20ms - janky experience
@@ -889,7 +1002,7 @@ React Fiber was introduced to solve the problem of long-running JavaScript block
 ```
 
 **Cooperative Scheduling:**
-```js
+```javascript
 // React doesn't block the entire render
 // It yields to browser for:
 // - User input
@@ -914,7 +1027,7 @@ Reconciliation is React's algorithm to determine what DOM changes are necessary.
 
 **Diffing Algorithm:**
 
-```js
+```javascript
 // Old tree
 <ul>
   <li key="a">A</li>
@@ -940,7 +1053,7 @@ Reconciliation is React's algorithm to determine what DOM changes are necessary.
 1. Elements of different types produce different trees
 2. Keys help identify which items changed
 
-```js
+```javascript
 // BAD - don't use index as key if list can change
 {items.map((item, index) => <li key={index}>{item}</li>)}
 
@@ -949,7 +1062,7 @@ Reconciliation is React's algorithm to determine what DOM changes are necessary.
 ```
 
 **Why Keys Matter:**
-```js
+```javascript
 // Without key (uses index)
 const Component = () => {
   const [items, setItems] = useState(['A', 'B', 'C']);
@@ -989,7 +1102,7 @@ The Virtual DOM is React's in-memory representation of the actual DOM.
 2. **Abstraction**: Developers work with React, not directly with DOM
 3. **Optimization**: React can calculate minimal changes needed
 
-```js
+```javascript
 // Without React (direct DOM manipulation)
 document.getElementById('count').textContent = '0';
 document.getElementById('count').textContent = '1';
@@ -1034,7 +1147,7 @@ setCount(2); // batched, only updates DOM once
 
 **Parent Rerender → Child Rerender Pattern:**
 
-```js
+```javascript
 function Parent() {
   const [count, setCount] = useState(0);
   
@@ -1058,7 +1171,7 @@ React re-renders parent, and by default, also re-renders all children. This is s
 
 **When Does It Happen:**
 
-```js
+```javascript
 // Child rerenders when:
 // 1. Parent rerenders AND
 // 2. Child component function is called
@@ -1079,7 +1192,7 @@ function Parent() {
 
 **Preventing Unnecessary Rerenders:**
 
-```js
+```javascript
 // Option 1: React.memo
 const Child = React.memo(function Child({ count }) {
   return <div>Count: {count}</div>;
@@ -1093,7 +1206,7 @@ function Parent() {
     // Only recreated if dependencies change
   }, []);
   
-  return <Child onClck={handleClick} />;
+  return <Child onClick={handleClick} />;
 }
 
 // Option 3: useMemo
@@ -1106,7 +1219,7 @@ const memoChild = useMemo(() => <Child />, [dependencies]);
 
 `React.memo` prevents rerender if props haven't changed.
 
-```js
+```javascript
 const Child = React.memo(function Child({ name }) {
   console.log('Child renders');
   return <div>Hello {name}</div>;
@@ -1127,7 +1240,7 @@ function Parent() {
 
 **When to Use:**
 
-```js
+```javascript
 // Good use case: Expensive component
 const ExpensiveList = React.memo(({ items }) => {
   const sorted = items.sort((a, b) => a - b); // Expensive operation
@@ -1142,7 +1255,7 @@ const Timestamp = React.memo(({ date }) => {
 
 **When NOT to Use:**
 
-```js
+```javascript
 // Bad: Props are always different (functions)
 const BadMemo = React.memo(({ onClick }) => {
   return <button onClick={onClick}>Click</button>;
@@ -1174,7 +1287,7 @@ function Parent() {
 
 Memoizes expensive computations.
 
-```js
+```javascript
 const expensiveValue = useMemo(() => {
   return expensiveCalculation(data);
 }, [data]); // Recalculate only if data changes
@@ -1182,7 +1295,7 @@ const expensiveValue = useMemo(() => {
 
 **When Useful:**
 
-```js
+```javascript
 // Expensive computation
 function Component({ items }) {
   const sortedItems = useMemo(() => {
@@ -1206,7 +1319,7 @@ function Parent({ data }) {
 
 **When Harmful:**
 
-```js
+```javascript
 // Premature optimization - simple values don't need useMemo
 const doubled = useMemo(() => count * 2, [count]); // Unnecessary
 
@@ -1225,7 +1338,7 @@ const c = useMemo(() => calculation3(b), [b]);
 
 Memoizes function references.
 
-```js
+```javascript
 const memoCallback = useCallback(() => {
   doSomething(a, b);
 }, [a, b]); // Function identity only changes if a or b changes
@@ -1233,7 +1346,7 @@ const memoCallback = useCallback(() => {
 
 **When Useful:**
 
-```js
+```javascript
 // Passing callbacks to memoized children
 function Parent() {
   const [count, setCount] = useState(0);
@@ -1261,7 +1374,7 @@ function Form() {
 
 **When Harmful:**
 
-```js
+```javascript
 // Every callback wrapped (unnecessary)
 function Component() {
   const log = useCallback(() => console.log('test'), []);
@@ -1282,7 +1395,7 @@ const callback = useCallback(() => {
 Code splitting with dynamic imports.
 
 **React.lazy:**
-```js
+```javascript
 const HeavyComponent = React.lazy(() => import('./HeavyComponent'));
 
 function App() {
@@ -1298,7 +1411,7 @@ function App() {
 
 **How Suspense Works:**
 
-```js
+```javascript
 function Suspense({ fallback, children }) {
   try {
     return children; // Renders component
@@ -1312,7 +1425,7 @@ function Suspense({ fallback, children }) {
 
 **Practical Example:**
 
-```js
+```javascript
 const Dashboard = React.lazy(() => import('./pages/Dashboard'));
 const Settings = React.lazy(() => import('./pages/Settings'));
 const Profile = React.lazy(() => import('./pages/Profile'));
@@ -1338,7 +1451,7 @@ Stale closure occurs when a function captures old variable values.
 
 **Example:**
 
-```js
+```javascript
 function Counter() {
   const [count, setCount] = useState(0);
   
@@ -1360,7 +1473,7 @@ function Counter() {
 
 **Solution:**
 
-```js
+```javascript
 // Option 1: Add to dependency array
 useEffect(() => {
   const timer = setInterval(() => {
@@ -1390,7 +1503,7 @@ useEffect(() => {
 **Controlled Component:**
 React state is the "source of truth"
 
-```js
+```javascript
 function ControlledInput() {
   const [value, setValue] = useState('');
   
@@ -1406,7 +1519,7 @@ function ControlledInput() {
 **Uncontrolled Component:**
 DOM is the "source of truth"
 
-```js
+```javascript
 function UncontrolledInput() {
   const inputRef = useRef(null);
   
@@ -1438,7 +1551,7 @@ function UncontrolledInput() {
 
 Reusable stateful logic.
 
-```js
+```javascript
 // useFetch Hook
 function useFetch(url) {
   const [data, setData] = useState(null);
@@ -1481,18 +1594,18 @@ function UserProfile({ userId }) {
 **Causes of Rerender:**
 
 1. **State Change**
-```js
+```javascript
 const [count, setCount] = useState(0);
 setCount(1); // Triggers rerender
 ```
 
 2. **Props Change**
-```js
+```javascript
 <Child count={count} /> // Rerenders when count changes
 ```
 
 3. **Parent Rerender**
-```js
+```javascript
 function Parent() {
   const [data, setData] = useState(); // Any state change
   
@@ -1501,14 +1614,14 @@ function Parent() {
 ```
 
 4. **Context Change**
-```js
+```javascript
 <ThemeContext.Provider value={theme}>
   <Component /> // Rerenders when theme changes
 </ThemeContext.Provider>
 ```
 
 5. **Key Change**
-```js
+```javascript
 <div key={id}>{content}</div> // New key = new component instance
 ```
 
@@ -1518,7 +1631,7 @@ function Parent() {
 
 Analyze rendering performance.
 
-```js
+```javascript
 // In React DevTools:
 // 1. Go to Profiler tab
 // 2. Record a session
@@ -1541,7 +1654,7 @@ Analyze rendering performance.
 ### 4.3 Bundle Optimization
 
 **Lazy Loading:**
-```js
+```javascript
 const Dashboard = React.lazy(() => import('./pages/Dashboard'));
 
 function App() {
@@ -1556,7 +1669,7 @@ function App() {
 ```
 
 **Dynamic Imports:**
-```js
+```javascript
 async function loadComponent() {
   const Component = await import('./Component');
   return Component.default;
@@ -1567,7 +1680,7 @@ import ComponentLib from '@myorg/components/Button';
 ```
 
 **Tree Shaking:**
-```js
+```javascript
 // Bad: imports entire library
 import _ from 'lodash';
 const arr = _.uniq([1, 2, 2, 3]);
@@ -1583,7 +1696,7 @@ const arr = uniq([1, 2, 2, 3]);
 
 Render only visible items in large lists.
 
-```js
+```javascript
 import { FixedSizeList } from 'react-window';
 
 function LargeList() {
@@ -1613,7 +1726,7 @@ function LargeList() {
 
 ### 4.5 Image Optimization
 
-```js
+```javascript
 // Next.js Image optimization
 import Image from 'next/image';
 
@@ -1655,7 +1768,7 @@ Is component slow?
 
 **Example Decision Process:**
 
-```js
+```javascript
 function ProductList({ products, filter }) {
   // Expensive filter operation
   const filteredProducts = useMemo(() => {
@@ -1697,7 +1810,7 @@ const MemoProduct = React.memo(function Product({ product, onSelect }) {
 
 **Core Concepts:**
 
-```js
+```javascript
 // Store: centralized state
 const store = createStore(reducer);
 
@@ -1744,7 +1857,7 @@ Components rerender
 
 Modern Redux with less boilerplate.
 
-```js
+```javascript
 import { createSlice, configureStore } from '@reduxjs/toolkit';
 
 // Slice
@@ -1808,7 +1921,7 @@ function Counter() {
 
 Simple, lightweight state management.
 
-```js
+```javascript
 import { create } from 'zustand';
 
 const useStore = create((set) => ({
@@ -1844,7 +1957,7 @@ function Counter() {
 
 Graph-like state with atoms.
 
-```js
+```javascript
 import { atom, useRecoilState, selector } from 'recoil';
 
 // Atom: unit of state
@@ -1883,7 +1996,7 @@ function Component() {
 
 Built-in React state management.
 
-```js
+```javascript
 const ThemeContext = React.createContext('light');
 
 function App() {
@@ -1905,7 +2018,7 @@ function Component() {
 
 **When NOT to Use Context:**
 
-```js
+```javascript
 // ❌ Frequently changing values
 <ThemeContext.Provider value={position}> {/* Position updates 60fps */}
   <Canvas /> {/* Will rerender 60fps */}
@@ -1953,7 +2066,7 @@ Recoil: Complex data graphs
 
 **SSR (Server-Side Rendering):**
 
-```js
+```javascript
 // When to use:
 // - Dynamic content (personalized)
 // - Frequent updates
@@ -1977,7 +2090,7 @@ export async function getServerSideProps() {
 
 **SSG (Static Site Generation):**
 
-```js
+```javascript
 // When to use:
 // - Static content
 // - Blog posts
@@ -2015,7 +2128,7 @@ export async function getStaticPaths() {
 
 **ISR (Incremental Static Regeneration):**
 
-```js
+```javascript
 // When to use:
 // - Large static sites
 // - Content updated occasionally
@@ -2036,7 +2149,7 @@ export async function getStaticProps() {
 
 **CSR (Client-Side Rendering):**
 
-```js
+```javascript
 // When to use:
 // - Highly interactive apps
 // - Frequent updates
@@ -2061,7 +2174,7 @@ export default function Dashboard() {
 
 Process of connecting React to server-rendered HTML.
 
-```js
+```javascript
 // Server generates HTML
 <html>
   <div id="app">
@@ -2078,7 +2191,7 @@ ReactDOM.hydrate(<App />, document.getElementById('app'));
 ```
 
 **In Next.js:**
-```js
+```javascript
 export default function Page() {
   return <div onClick={() => alert('Clicked!')}>Click me</div>;
 }
@@ -2097,7 +2210,7 @@ When server HTML doesn't match client HTML.
 
 **Common Causes:**
 
-```js
+```javascript
 // ❌ Using browser APIs on server
 export default function Component() {
   return <div>{typeof window}</div>;
@@ -2162,7 +2275,7 @@ app/
 ```
 
 **Layouts:**
-```js
+```javascript
 // app/layout.js - applies to all routes
 export const metadata = {
   title: 'My App'
@@ -2197,7 +2310,7 @@ export default function BlogLayout({ children }) {
 
 Components that only run on server.
 
-```js
+```javascript
 // app/page.js (Server Component by default)
 import { db } from '@/lib/db';
 
@@ -2226,7 +2339,7 @@ export default async function Page() {
 
 Components that run on client.
 
-```js
+```javascript
 'use client';
 
 import { useState } from 'react';
@@ -2252,7 +2365,7 @@ export default function Counter() {
 
 ### 6.7 Data Fetching in Next.js
 
-```js
+```javascript
 // SSG - fetch at build time
 export async function getStaticProps() {
   const res = await fetch('https://api.example.com/posts');
@@ -2309,7 +2422,7 @@ Next.js has 4 layers of caching.
 ```
 
 **Request Memoization:**
-```js
+```javascript
 // Multiple calls to same fetch are deduped
 async function getData() {
   const res1 = await fetch('/api/data'); // Fetches
@@ -2320,7 +2433,7 @@ async function getData() {
 ```
 
 **Data Cache:**
-```js
+```javascript
 // Reused across requests and deployments
 async function getData() {
   const res = await fetch('/api/data', {
@@ -2340,7 +2453,7 @@ const res = await fetch('/api/data', {
 ```
 
 **Full Route Cache:**
-```js
+```javascript
 // Pre-rendered at build time
 // Served statically until revalidated
 export async function getStaticProps() {
@@ -2349,7 +2462,7 @@ export async function getStaticProps() {
 ```
 
 **Router Cache:**
-```js
+```javascript
 // Client-side cache for prefetched routes
 <Link href="/post/1" prefetch={true}>
   Link {/* Route cached in browser */}
@@ -2362,7 +2475,7 @@ export async function getStaticProps() {
 
 ### 7.1 React Router
 
-```js
+```javascript
 import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
 
 function App() {
@@ -2436,7 +2549,7 @@ export default function Docs({ params }) {
 
 Injecting malicious scripts into web pages.
 
-```js
+```javascript
 // ❌ Vulnerable
 function Component() {
   const userInput = '<img src=x onerror="alert(\'hacked\')">';
@@ -2452,7 +2565,7 @@ function Component() {
 
 **Prevention:**
 
-```js
+```javascript
 // Always escape user input
 function Component({ userComment }) {
   return <div>{userComment}</div>; // Safe
@@ -2484,7 +2597,7 @@ Attacker tricks user into performing unwanted actions.
 
 **Prevention:**
 
-```js
+```javascript
 // 1. Use CSRF tokens
 <form method="POST" action="/api/transfer">
   <input type="hidden" name="csrf" value={csrfToken} />
@@ -2510,7 +2623,7 @@ res.cookie('session', token, {
 
 ### 8.3 JWT Security
 
-```js
+```javascript
 // Where to store JWT?
 
 // ❌ localStorage - vulnerable to XSS
@@ -2533,7 +2646,7 @@ axios.defaults.withCredentials = true;
 
 Cross-Origin Resource Sharing - security feature that prevents unauthorized cross-origin requests.
 
-```js
+```javascript
 // Why it happens?
 // Browser: Security feature to prevent malicious cross-origin requests
 fetch('https://api.different-domain.com/data')
@@ -2573,7 +2686,7 @@ module.exports = {
 
 Never expose sensitive information to frontend.
 
-```js
+```javascript
 // ❌ Bad
 export async function getStaticProps() {
   const users = await db.users.findAll();
@@ -2609,7 +2722,7 @@ const dbUrl = process.env.DATABASE_URL;
 
 ### 9.1 Input Validation & Sanitization
 
-```js
+```javascript
 // Before sending to API
 async function createUser(formData) {
   // 1. Input validation
@@ -2651,14 +2764,14 @@ async function createUser(formData) {
 
 **Libraries:**
 
-```js
+```javascript
 // Zod - TypeScript-first schema validation
 import { z } from 'zod';
 
 const userSchema = z.object({
   email: z.string().email(),
   password: z.string().min(8),
-  age: z.number().int().positive().optional()
+  age: z.number().int().optional()
 });
 
 const validated = userSchema.parse(userData);
@@ -2755,7 +2868,7 @@ query {
 ```
 
 **Solution: DataLoader**
-```js
+```javascript
 const userLoader = new DataLoader(async (userIds) => {
   const users = await db.user.findAll({
     where: { id: userIds }
@@ -2777,7 +2890,7 @@ const resolvers = {
 
 ### 10.4 Caching
 
-```js
+```javascript
 // Apollo Client caching
 import { ApolloClient, InMemoryCache } from '@apollo/client';
 
@@ -2807,7 +2920,7 @@ const client = new ApolloClient({
 
 ### 10.5 Apollo Client
 
-```js
+```javascript
 import { gql, useQuery, useMutation } from '@apollo/client';
 
 const GET_USER = gql`
@@ -2865,7 +2978,7 @@ function CreateUserForm() {
 
 ### 11.1 Interface vs Type
 
-```ts
+```typescript
 // Interface - used for objects
 interface User {
   name: string;
@@ -2906,7 +3019,7 @@ type Status = 'pending' | 'completed' | 'failed';
 
 ### 11.2 Generics
 
-```ts
+```typescript
 // Generic function
 function identity<T>(arg: T): T {
   return arg;
@@ -2951,7 +3064,7 @@ class UserRepository implements Repository<User> {
 
 ### 11.3 Generic Constraints
 
-```ts
+```typescript
 // Constrain generic type
 function getLength<T extends { length: number }>(arg: T): number {
   return arg.length;
@@ -2980,7 +3093,7 @@ type B = IsString<number>; // false
 
 ### 11.4 Utility Types
 
-```ts
+```typescript
 // Partial<T> - make all properties optional
 interface User {
   name: string;
@@ -3022,7 +3135,7 @@ const user: ReadonlyUser = { /* ... */ };
 
 ### 11.5 keyof and typeof
 
-```ts
+```typescript
 // keyof - get keys of type
 interface User {
   name: string;
@@ -3054,7 +3167,7 @@ updateUser('age', 30); // Valid
 
 ### 11.6 Unknown vs Any
 
-```ts
+```typescript
 // any - opt-out of type checking
 let value: any = 'string';
 value.trim(); // No error, assumes it exists
@@ -3131,7 +3244,7 @@ Renders dynamic website
 
 **Example:**
 
-```js
+```javascript
 // Strapi has a Post content type
 // API: https://cms.example.com/api/posts
 
@@ -3161,7 +3274,7 @@ export async function getStaticProps() {
 
 Test component behavior, not implementation.
 
-```js
+```javascript
 import { render, screen, fireEvent } from '@testing-library/react';
 
 test('button click increments counter', () => {
@@ -3182,7 +3295,7 @@ test('button click increments counter', () => {
 
 JavaScript testing framework.
 
-```js
+```javascript
 describe('Math utils', () => {
   test('add should return sum', () => {
     expect(add(2, 3)).toBe(5);
@@ -3198,7 +3311,7 @@ describe('Math utils', () => {
 
 ### 13.3 Mocking APIs
 
-```js
+```javascript
 // Mock fetch
 global.fetch = jest.fn(() =>
   Promise.resolve({
@@ -3218,7 +3331,7 @@ jest.mock('./api', () => ({
 
 Intercept network requests.
 
-```js
+```javascript
 import { setupServer } from 'msw/node';
 import { http, HttpResponse } from 'msw';
 
@@ -3265,7 +3378,7 @@ E2E TESTS
 
 ### 14.1 Debounce Search
 
-```js
+```javascript
 function useDebouncedSearch(onSearch) {
   const [query, setQuery] = useState('');
   const timerRef = useRef(null);
@@ -3308,7 +3421,7 @@ function SearchUsers() {
 
 ### 14.2 Infinite Scroll
 
-```js
+```javascript
 function InfiniteScroll() {
   const [items, setItems] = useState([]);
   const [page, setPage] = useState(0);
@@ -3355,7 +3468,7 @@ function InfiniteScroll() {
 
 ### 14.3 Modal
 
-```js
+```javascript
 function Modal({ isOpen, onClose, children }) {
   if (!isOpen) return null;
   
@@ -3389,7 +3502,7 @@ function App() {
 
 ### 14.4 Accordion
 
-```js
+```javascript
 function Accordion() {
   const [activeIndex, setActiveIndex] = useState(0);
   
@@ -3426,7 +3539,7 @@ function Accordion() {
 
 ### 14.5 useDebounce Hook
 
-```js
+```javascript
 function useDebounce(value, delay) {
   const [debouncedValue, setDebouncedValue] = useState(value);
   
@@ -3466,7 +3579,7 @@ function SearchComponent() {
 
 ### 14.6 useThrottle Hook
 
-```js
+```javascript
 function useThrottle(value, delay) {
   const [throttledValue, setThrottledValue] = useState(value);
   const lastUpdated = useRef(Date.now());
@@ -3495,7 +3608,7 @@ function useThrottle(value, delay) {
 
 ### 14.7 useFetch Hook
 
-```js
+```javascript
 function useFetch(url) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -3585,7 +3698,7 @@ function useFetch(url) {
 
 **Implementation Strategy:**
 
-```js
+```javascript
 function ProductListing() {
   const [filters, setFilters] = useState({
     category: 'all',
@@ -3696,7 +3809,7 @@ function ProductListing() {
 
 **Implementation:**
 
-```js
+```javascript
 // Backend sends notifications
 io.emit('notification', {
   id: '123',
@@ -3763,7 +3876,7 @@ components-library/
 
 **Key Considerations:**
 
-```js
+```typescript
 // 1. Design Tokens
 export const theme = {
   colors: {
@@ -3825,37 +3938,23 @@ export const Secondary = () => <Button variant="secondary">Click me</Button>;
 
 ---
 
-## 16. Top 20 Most Asked Questions (Detailed)
+## Top 20 Most Asked Questions
 
 ### 1. SSR vs SSG vs ISR vs CSR
-
-Already covered in detail in section 6.1
-
----
+Already covered in detail in **Section 6.1**
 
 ### 2. Hydration
-
-Already covered in detail in section 6.2
-
----
+Already covered in detail in **Section 6.2**
 
 ### 3. React Fiber
-
-Already covered in detail in section 3.1
-
----
+Already covered in detail in **Section 3.1**
 
 ### 4. Reconciliation
-
-Already covered in detail in section 3.2
-
----
+Already covered in detail in **Section 3.2**
 
 ### 5. useMemo vs useCallback
-
 **Quick Comparison:**
-
-```js
+```javascript
 // useMemo - memoize value
 const expensiveValue = useMemo(() => {
   return heavyCalculation(data);
@@ -3871,120 +3970,87 @@ const handleClick = useCallback(() => {
 // useCallback: Pass function to memoized child OR dependency for useEffect
 ```
 
----
-
 ### 6. Why React Rerenders
-
-Already covered in section 4.1
-
----
+Already covered in **Section 4.1**
 
 ### 7. Stale Closure
-
-Already covered in section 3.9
-
----
+Already covered in **Section 3.9**
 
 ### 8. Debounce vs Throttle
-
-Already covered in section 1.7-1.8
-
----
+Already covered in **Section 1.7-1.8**
 
 ### 9. Event Loop
-
-Already covered in section 1.2
-
----
+Already covered in **Section 1.2**
 
 ### 10. Promise APIs
-
-Already covered in section 1.12
-
----
+Already covered in **Section 1.12**
 
 ### 11. Redux vs Context vs Zustand
-
-Already covered in section 5
-
----
+Already covered in **Section 5**
 
 ### 12. GraphQL vs REST
-
-Already covered in section 10.2
-
----
+Already covered in **Section 10.2**
 
 ### 13. Next.js Caching
-
-Already covered in section 6.8
-
----
+Already covered in **Section 6.8**
 
 ### 14. Dynamic Routing
-
-Already covered in section 7.2
-
----
+Already covered in **Section 7.2**
 
 ### 15. Image Optimization
-
-Already covered in section 4.5
-
----
+Already covered in **Section 4.5**
 
 ### 16. XSS
-
-Already covered in section 8.1
-
----
+Already covered in **Section 8.1**
 
 ### 17. JWT Storage
-
-Already covered in section 8.3
-
----
+Already covered in **Section 8.3**
 
 ### 18. Interface vs Type
-
-Already covered in section 11.1
-
----
+Already covered in **Section 11.1**
 
 ### 19. Generics
-
-Already covered in section 11.2
-
----
+Already covered in **Section 11.2**
 
 ### 20. Critical Rendering Path
-
-Already covered in section 2.1
+Already covered in **Section 2.1**
 
 ---
 
-## Summary
+## Summary & Study Strategy
 
-**Master these areas for 4+ years React/Next.js interviews:**
+**Master these 16 areas for 4+ years React/Next.js interviews:**
 
-1. **JavaScript Fundamentals** - Closures, Event Loop, Async/Await
-2. **Browser Internals** - CRP, Reflow/Repaint, Storage
-3. **React Core** - Fiber, Reconciliation, Hooks
-4. **Performance** - Memoization, Bundle Optimization, Virtualization
-5. **State Management** - Redux, Zustand, Context
-6. **Next.js** - SSR/SSG/ISR, Hydration, Caching
-7. **Security** - XSS, CSRF, JWT, CORS
-8. **TypeScript** - Generics, Utility Types, Type Guards
-9. **Testing** - Unit, Integration, E2E tests
-10. **System Design** - Design components, systems at scale
+1. ✅ **JavaScript Fundamentals** - Closures, Event Loop, Async/Await
+2. ✅ **Browser Internals** - CRP, Reflow/Repaint, Storage
+3. ✅ **React Core** - Fiber, Reconciliation, Hooks
+4. ✅ **Performance** - Memoization, Bundle Optimization, Virtualization
+5. ✅ **State Management** - Redux, Zustand, Context
+6. ✅ **Next.js** - SSR/SSG/ISR, Hydration, Caching
+7. ✅ **Security** - XSS, CSRF, JWT, CORS
+8. ✅ **TypeScript** - Generics, Utility Types, Type Guards
+9. ✅ **Testing** - Unit, Integration, E2E tests
+10. ✅ **Machine Coding** - Implement common patterns
+11. ✅ **System Design** - Design components and systems at scale
+12. ✅ **Routing** - Both React Router and Next.js
+13. ✅ **API Security** - Input validation, sanitization
+14. ✅ **GraphQL** - Basics and advantages over REST
+15. ✅ **CMS** - Headless CMS with Strapi
+16. ✅ **Top 20 Questions** - Most commonly asked in interviews
 
-**Practice Strategy:**
+**Recommended Study Schedule:**
 
-1. **Week 1-2**: Solidify JavaScript fundamentals
-2. **Week 3**: Deep dive into React concepts
-3. **Week 4**: Master Next.js and performance
-4. **Week 5**: Security and testing
-5. **Week 6**: Machine coding and system design
-6. **Week 7**: Mock interviews and refinement
+- **Week 1-2**: JavaScript fundamentals (closures, event loop, promises)
+- **Week 3**: React core concepts (Fiber, reconciliation, hooks)
+- **Week 4**: Performance optimization and state management
+- **Week 5**: Next.js and server-side rendering
+- **Week 6**: Security, TypeScript, and testing
+- **Week 7**: Machine coding problems
+- **Week 8**: System design and mock interviews
 
 **Good luck with your interviews! 🚀**
+
+---
+
+*Last Updated: 2024*
+*Made for: Senior React/Next.js Developers*
