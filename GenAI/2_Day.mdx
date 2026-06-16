@@ -1,0 +1,575 @@
+# Day 2: Complete Working Code (Copy & Paste)
+
+## 🚀 Quick Start (5 Minutes)
+
+### Step 1: Create Project
+
+```bash
+mkdir ai-chat-backend
+cd ai-chat-backend
+npm init -y
+npm install express cors dotenv openai
+npm install -D nodemon
+mkdir -p src/routes src/controllers src/services
+```
+
+### Step 2: Create .env
+
+Create file: `.env`
+
+```env
+PORT=5000
+OPENAI_API_KEY=sk-proj-your-key-here
+NODE_ENV=development
+```
+
+### Step 3: Update package.json
+
+Replace the scripts section:
+
+```json
+"scripts": {
+  "start": "node src/app.js",
+  "dev": "nodemon src/app.js"
+}
+```
+
+### Step 4: Copy Files Below
+
+Then run:
+
+```bash
+npm run dev
+```
+
+---
+
+## 📄 File 1: src/services/openai.service.js
+
+```javascript
+import OpenAI from 'openai';
+
+// Initialize OpenAI client
+// Reads OPENAI_API_KEY from .env
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY
+});
+
+export default openai;
+```
+
+---
+
+## 📄 File 2: src/controllers/chat.controller.js
+
+```javascript
+import openai from '../services/openai.service.js';
+
+/**
+ * POST /api/chat
+ * Basic chat endpoint
+ * 
+ * Body: { "prompt": "Explain React" }
+ * 
+ * Response: {
+ *   success: true,
+ *   answer: "...",
+ *   tokens: { input, output, total }
+ * }
+ */
+export const chat = async (req, res) => {
+  try {
+    const { prompt } = req.body;
+
+    // Validation
+    if (!prompt || typeof prompt !== 'string') {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid request. "prompt" is required and must be a string.'
+      });
+    }
+
+    if (prompt.length > 4000) {
+      return res.status(400).json({
+        success: false,
+        message: 'Prompt too long. Maximum 4000 characters.'
+      });
+    }
+
+    // Call OpenAI
+    const response = await openai.chat.completions.create({
+      model: 'gpt-3.5-turbo',
+      messages: [
+        {
+          role: 'user',
+          content: prompt
+        }
+      ],
+      temperature: 0.7,
+      max_tokens: 1000
+    });
+
+    // Extract answer
+    const answer = response.choices[0].message.content;
+
+    // Log
+    console.log(`✓ Chat: ${response.usage.total_tokens} tokens used`);
+
+    // Return
+    res.json({
+      success: true,
+      prompt,
+      answer,
+      tokens: {
+        input: response.usage.input_tokens,
+        output: response.usage.output_tokens,
+        total: response.usage.total_tokens
+      },
+      model: 'gpt-3.5-turbo'
+    });
+
+  } catch (error) {
+    console.error('❌ Error:', error.message);
+
+    if (error.status === 401) {
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid API key'
+      });
+    }
+
+    if (error.status === 429) {
+      return res.status(429).json({
+        success: false,
+        message: 'Rate limited. Too many requests.'
+      });
+    }
+
+    res.status(500).json({
+      success: false,
+      message: 'Something went wrong',
+      error: error.message
+    });
+  }
+};
+
+/**
+ * POST /api/frontend-interviewer
+ * Acts as a senior frontend engineer conducting interview
+ * 
+ * Body: { "question": "Explain React hooks" }
+ * 
+ * Response: {
+ *   interviewer: "Frontend Engineer",
+ *   response: "..."
+ * }
+ */
+export const frontendInterviewer = async (req, res) => {
+  try {
+    const { question } = req.body;
+
+    if (!question) {
+      return res.status(400).json({
+        success: false,
+        message: 'Question is required'
+      });
+    }
+
+    const response = await openai.chat.completions.create({
+      model: 'gpt-4o',
+      messages: [
+        {
+          role: 'system',
+          content: `You are a Senior Frontend Engineer with 12 years of experience.
+                   You are conducting a technical interview for a mid-level developer position.
+                   
+                   Your interview style:
+                   - Professional but approachable
+                   - Explain why certain approaches are better
+                   - Ask follow-up questions to gauge depth
+                   - Mention real-world scenarios
+                   - Be encouraging even when pointing out gaps
+                   
+                   Your areas of expertise:
+                   - React (hooks, performance, state management)
+                   - TypeScript
+                   - Web standards (HTML, CSS, JavaScript)
+                   - Performance optimization
+                   - Testing`
+        },
+        {
+          role: 'user',
+          content: question
+        }
+      ],
+      temperature: 0.8,
+      max_tokens: 1500
+    });
+
+    console.log(`✓ Interview: ${response.usage.total_tokens} tokens`);
+
+    res.json({
+      success: true,
+      role: 'Frontend Engineer',
+      question,
+      response: response.choices[0].message.content,
+      tokens: response.usage.total_tokens
+    });
+
+  } catch (error) {
+    console.error('Interview error:', error.message);
+    res.status(500).json({
+      success: false,
+      message: 'Error',
+      error: error.message
+    });
+  }
+};
+
+/**
+ * POST /api/resume-reviewer
+ * Acts as an experienced resume reviewer
+ * 
+ * Body: { "resume": "Senior Engineer..." }
+ * 
+ * Response: {
+ *   feedback: "..."
+ * }
+ */
+export const resumeReviewer = async (req, res) => {
+  try {
+    const { resume } = req.body;
+
+    if (!resume || resume.length < 50) {
+      return res.status(400).json({
+        success: false,
+        message: 'Resume must be at least 50 characters'
+      });
+    }
+
+    if (resume.length > 10000) {
+      return res.status(400).json({
+        success: false,
+        message: 'Resume too long (max 10,000 characters)'
+      });
+    }
+
+    const response = await openai.chat.completions.create({
+      model: 'gpt-4o',
+      messages: [
+        {
+          role: 'system',
+          content: `You are an expert Resume Reviewer with 15 years of HR experience.
+                   
+                   When reviewing a resume, provide feedback on:
+                   1. Format and organization (is it scannable?)
+                   2. Content quality (are achievements quantified?)
+                   3. ATS optimization (will it pass filters?)
+                   4. Clarity and professionalism
+                   5. Specific, actionable suggestions
+                   
+                   Be constructive, encouraging, and specific.
+                   Start with strengths, then suggest improvements.
+                   End with top 3 actionable items to improve.`
+        },
+        {
+          role: 'user',
+          content: `Please review this resume:\n\n${resume}`
+        }
+      ],
+      temperature: 0.7,
+      max_tokens: 1500
+    });
+
+    console.log(`✓ Resume review: ${response.usage.total_tokens} tokens`);
+
+    res.json({
+      success: true,
+      feedback: response.choices[0].message.content,
+      tokens: response.usage.total_tokens
+    });
+
+  } catch (error) {
+    console.error('Resume review error:', error.message);
+    res.status(500).json({
+      success: false,
+      message: 'Error',
+      error: error.message
+    });
+  }
+};
+```
+
+---
+
+## 📄 File 3: src/routes/chat.route.js
+
+```javascript
+import express from 'express';
+import {
+  chat,
+  frontendInterviewer,
+  resumeReviewer
+} from '../controllers/chat.controller.js';
+
+const router = express.Router();
+
+router.post('/chat', chat);
+router.post('/frontend-interviewer', frontendInterviewer);
+router.post('/resume-reviewer', resumeReviewer);
+
+export default router;
+```
+
+---
+
+## 📄 File 4: src/app.js
+
+```javascript
+import express from 'express';
+import cors from 'cors';
+import dotenv from 'dotenv';
+import chatRoutes from './routes/chat.route.js';
+
+// Load environment variables
+dotenv.config();
+
+const app = express();
+const PORT = process.env.PORT || 5000;
+
+// Middleware
+app.use(cors());
+app.use(express.json());
+
+// Health check
+app.get('/health', (req, res) => {
+  res.json({ status: '✓ Server is running' });
+});
+
+// Home
+app.get('/', (req, res) => {
+  res.json({
+    message: 'AI Chat Backend',
+    endpoints: {
+      health: 'GET /health',
+      chat: 'POST /api/chat',
+      interviewer: 'POST /api/frontend-interviewer',
+      reviewer: 'POST /api/resume-reviewer'
+    }
+  });
+});
+
+// Routes
+app.use('/api', chatRoutes);
+
+// 404
+app.use((req, res) => {
+  res.status(404).json({
+    success: false,
+    message: 'Endpoint not found'
+  });
+});
+
+// Error handler
+app.use((error, req, res, next) => {
+  console.error('Error:', error);
+  res.status(500).json({
+    success: false,
+    message: 'Server error',
+    error: process.env.NODE_ENV === 'development' ? error.message : undefined
+  });
+});
+
+// Start
+app.listen(PORT, () => {
+  console.log(`
+  ╔════════════════════════════════════╗
+  ║  🚀 AI Backend Started             ║
+  ╚════════════════════════════════════╝
+  
+  📍 http://localhost:${PORT}
+  
+  📝 Endpoints:
+    • POST /api/chat
+    • POST /api/frontend-interviewer
+    • POST /api/resume-reviewer
+  
+  🔍 Health: GET /health
+  `);
+});
+```
+
+---
+
+## 🧪 Postman Test Commands
+
+### Test 1: Basic Chat
+
+```
+POST http://localhost:5000/api/chat
+
+Body (JSON):
+{
+  "prompt": "Explain closures in JavaScript in 2 sentences"
+}
+```
+
+**Expected response:**
+
+```json
+{
+  "success": true,
+  "prompt": "Explain closures in JavaScript in 2 sentences",
+  "answer": "A closure is a function that has access to variables from its outer scope...",
+  "tokens": {
+    "input": 15,
+    "output": 45,
+    "total": 60
+  },
+  "model": "gpt-3.5-turbo"
+}
+```
+
+---
+
+### Test 2: Frontend Interviewer
+
+```
+POST http://localhost:5000/api/frontend-interviewer
+
+Body (JSON):
+{
+  "question": "What is the difference between useCallback and useMemo?"
+}
+```
+
+---
+
+### Test 3: Resume Reviewer
+
+```
+POST http://localhost:5000/api/resume-reviewer
+
+Body (JSON):
+{
+  "resume": "Senior Frontend Engineer\n\nExperience:\n- 5 years at TechCorp\n- Led 3 developer team\n- Improved performance by 40%\n\nSkills: React, Node.js, TypeScript"
+}
+```
+
+---
+
+## 🧹 .gitignore
+
+```
+.env
+.env.local
+node_modules/
+*.log
+.DS_Store
+```
+
+---
+
+## 📦 Complete package.json
+
+```json
+{
+  "name": "ai-chat-backend",
+  "version": "1.0.0",
+  "description": "AI Chat Backend with Node.js and OpenAI",
+  "type": "module",
+  "main": "src/app.js",
+  "scripts": {
+    "start": "node src/app.js",
+    "dev": "nodemon src/app.js"
+  },
+  "keywords": ["ai", "openai", "chat", "backend"],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2",
+    "openai": "^4.28.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  }
+}
+```
+
+---
+
+## 🔧 Troubleshooting
+
+### Error: "Cannot find module 'openai'"
+
+```bash
+npm install openai
+```
+
+### Error: "API key not found"
+
+Check your `.env` file:
+```env
+OPENAI_API_KEY=sk-proj-your-actual-key-here
+```
+
+### Error: "401 Unauthorized"
+
+Your API key is invalid. Get a new one from [OpenAI](https://platform.openai.com/api-keys)
+
+### Error: "429 Too Many Requests"
+
+You've hit rate limits. Wait a moment before trying again.
+
+---
+
+## 🚀 Next Steps
+
+1. **Get API Key**: https://platform.openai.com/api-keys
+2. **Create .env**: Add your API key
+3. **Copy code above**: All 4 files
+4. **Run**: `npm run dev`
+5. **Test**: Use Postman (curl commands above)
+
+---
+
+## 🎯 Assignment Checklist
+
+- [ ] Create project folder and install dependencies
+- [ ] Create `.env` with your OpenAI API key
+- [ ] Create all 4 files above
+- [ ] Run `npm run dev` - verify it starts
+- [ ] Test `/api/chat` endpoint in Postman
+- [ ] Test `/api/frontend-interviewer` endpoint
+- [ ] Test `/api/resume-reviewer` endpoint
+- [ ] Get all responses working
+
+Once all 3 endpoints work, you're ready for Day 3!
+
+---
+
+## 💡 Tips
+
+**Tip 1:** If code changes don't work, restart server (nodemon should auto-restart)
+
+**Tip 2:** Check your API key is valid at https://platform.openai.com/api-keys
+
+**Tip 3:** Watch the logs - they tell you what's happening
+
+**Tip 4:** Test with Postman before moving to frontend
+
+**Tip 5:** Save token usage to estimate costs
+
+---
+
+## 🎓 Interview Questions You Should Know
+
+1. Why is API key in .env and not in code?
+2. What does CORS do?
+3. Why not call OpenAI directly from frontend?
+4. What's the difference between system and user prompt?
+5. How do you handle errors in Express?
+
+Review these concepts while your server is running!
