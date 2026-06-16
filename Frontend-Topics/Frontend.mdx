@@ -1,3 +1,20 @@
+---
+title: 'Complete React/Next.js Interview Preparation Guide (4+ Years)'
+description: 'Comprehensive interview guide for senior React/Next.js developers with detailed answers, code examples, and system design patterns'
+date: '2024'
+author: 'Interview Preparation'
+category: 'React & Next.js'
+tags: ['react', 'nextjs', 'javascript', 'typescript', 'system-design', 'interview']
+---
+
+# Complete React/Next.js Interview Preparation Guide (4+ Years)
+
+For a **4+ years React/Next.js Developer**, interviewers are increasingly moving beyond basic hooks and asking **architecture, performance, rendering, caching, browser internals, and real-world tradeoffs**.
+
+This is your complete preparation checklist.
+
+---
+
 ## 📑 Quick Navigation - Table of Contents
 
 ### Core JavaScript
@@ -106,6 +123,28 @@
 - [15.2 Dashboard](#152-design-dashboard)
 - [15.3 Notification System](#153-design-notification-system)
 - [15.4 Component Library](#154-design-reusable-component-library)
+
+### 🔥 CRITICAL SENIOR-LEVEL TOPICS
+- [16.1 Error Boundaries](#161-error-boundaries)
+- [16.2 Web Vitals (LCP, FID, CLS)](#162-web-vitals-lcp-fid-cls)
+- [16.3 React Query/TanStack Query](#163-react-querytanstack-query)
+- [16.4 Service Workers & PWA](#164-service-workers--pwa)
+- [16.5 Concurrent Features (useTransition, useDeferredValue)](#165-concurrent-features-usetransition-usedeferredvalue)
+- [16.6 E2E Testing (Cypress/Playwright)](#166-e2e-testing-cypressplaywright)
+- [16.7 Accessibility (a11y) & WCAG](#167-accessibility-a11y--wcag)
+- [16.8 Advanced TypeScript Patterns](#168-advanced-typescript-patterns)
+- [16.9 Micro-frontends & Module Federation](#169-micro-frontends--module-federation)
+- [16.10 Authentication Patterns (JWT, OAuth, SSO)](#1610-authentication-patterns-jwt-oauth-sso)
+- [16.11 Advanced State Management](#1611-advanced-state-management)
+- [16.12 Higher Order Components (HOC) vs Render Props vs Hooks](#1612-higher-order-components-hoc-vs-render-props-vs-hooks)
+- [16.13 Image Optimization & WebP](#1613-image-optimization--webp)
+- [16.14 CSS-in-JS vs Tailwind vs CSS Modules](#1614-css-in-js-vs-tailwind-vs-css-modules)
+- [16.15 Compound Component Pattern](#1615-compound-component-pattern)
+- [16.16 Error Handling & Recovery](#1616-error-handling--recovery)
+- [16.17 Request Deduplication & Caching](#1617-request-deduplication--caching)
+- [16.18 Streaming & Suspense in Next.js](#1618-streaming--suspense-in-nextjs)
+- [16.19 Advanced API Routes & Middleware](#1619-advanced-api-routes--middleware)
+- [16.20 Web Workers & Service Workers](#1620-web-workers--service-workers)
 
 ### Top 20 Questions
 - [Question 1-20](#top-20-most-asked-questions)
@@ -3934,6 +3973,1262 @@ export default {
 
 export const Primary = () => <Button variant="primary">Click me</Button>;
 export const Secondary = () => <Button variant="secondary">Click me</Button>;
+```
+
+---
+
+---
+
+## 16. 🔥 CRITICAL SENIOR-LEVEL TOPICS
+
+### 16.1 Error Boundaries
+
+Error Boundaries catch errors in React component tree and display fallback UI.
+
+```typescript
+// ErrorBoundary.tsx
+import React from 'react';
+
+interface Props {
+  children: React.ReactNode;
+  fallback?: React.ReactNode;
+}
+
+interface State {
+  hasError: boolean;
+  error: Error | null;
+}
+
+class ErrorBoundary extends React.Component<Props, State> {
+  constructor(props: Props) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+
+  static getDerivedStateFromError(error: Error) {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    // Log to error tracking service (Sentry, LogRocket)
+    console.error('Error caught:', error, errorInfo);
+    
+    // Send to Sentry
+    Sentry.captureException(error, { contexts: { errorInfo } });
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div style={{ padding: '20px', textAlign: 'center' }}>
+          <h2>Something went wrong</h2>
+          <p>{this.state.error?.message}</p>
+          <button onClick={() => this.setState({ hasError: false })}>
+            Try Again
+          </button>
+        </div>
+      );
+    }
+
+    return this.props.children;
+  }
+}
+
+// Usage
+export default function App() {
+  return (
+    <ErrorBoundary fallback={<div>Error occurred</div>}>
+      <YourComponent />
+    </ErrorBoundary>
+  );
+}
+```
+
+**What Error Boundaries DON'T catch:**
+- ❌ Async errors (use try-catch)
+- ❌ Event handler errors (use try-catch)
+- ❌ Server-side rendering
+- ❌ Errors in the boundary itself
+
+---
+
+### 16.2 Web Vitals (LCP, FID, CLS)
+
+Core Web Vitals measure real-world user experience.
+
+```typescript
+// Measure Web Vitals
+import { getCLS, getFID, getFCP, getLCP, getTTFB } from 'web-vitals';
+
+export function reportWebVitals(metric) {
+  console.log(metric);
+  
+  // Send to analytics
+  if (metric.label === 'web-vital') {
+    // Google Analytics
+    gtag.event(metric.name, {
+      event_category: 'Web Vitals',
+      value: Math.round(metric.value),
+      event_label: metric.id,
+      non_interaction: true,
+    });
+  }
+}
+
+// Register observers
+getCLS(reportWebVitals);
+getFID(reportWebVitals);
+getFCP(reportWebVitals);
+getLCP(reportWebVitals);
+getTTFB(reportWebVitals);
+```
+
+**The 3 Core Web Vitals:**
+
+| Metric | What it Measures | Target | Good Range |
+|--------|------------------|--------|------------|
+| **LCP** (Largest Contentful Paint) | Page load speed | < 2.5s | 0-2.5s |
+| **FID** (First Input Delay) | Interactivity | < 100ms | 0-100ms |
+| **CLS** (Cumulative Layout Shift) | Visual stability | < 0.1 | 0-0.1 |
+
+**Optimize LCP:**
+```typescript
+// 1. Preload critical resources
+<link rel="preload" as="image" href="hero.jpg" />
+
+// 2. Code splitting
+const HeavyComponent = React.lazy(() => import('./Heavy'));
+
+// 3. Image optimization
+<Image src="hero.jpg" width={1200} height={600} priority />
+
+// 4. Defer non-critical JavaScript
+<script async src="analytics.js"></script>
+```
+
+---
+
+### 16.3 React Query/TanStack Query
+
+Modern data fetching and caching library for React.
+
+```typescript
+// Setup
+import { QueryClient, QueryClientProvider, useQuery, useMutation } from '@tanstack/react-query';
+
+const queryClient = new QueryClient();
+
+function App() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <YourApp />
+    </QueryClientProvider>
+  );
+}
+
+// Fetch data with caching
+function UserProfile({ userId }) {
+  const { data: user, isLoading, error } = useQuery({
+    queryKey: ['user', userId], // Unique key
+    queryFn: async () => {
+      const res = await fetch(`/api/user/${userId}`);
+      return res.json();
+    },
+    staleTime: 5 * 60 * 1000, // 5 minutes before considered stale
+    cacheTime: 10 * 60 * 1000, // Keep in cache for 10 minutes
+    retry: 3, // Retry 3 times on failure
+  });
+
+  if (isLoading) return <div>Loading...</div>;
+  if (error) return <div>Error: {error.message}</div>;
+
+  return <div>{user.name}</div>;
+}
+
+// Mutations with side effects
+function UpdateUser() {
+  const mutation = useMutation({
+    mutationFn: async (newData) => {
+      const res = await fetch('/api/user', {
+        method: 'PUT',
+        body: JSON.stringify(newData),
+      });
+      return res.json();
+    },
+    onSuccess: (data) => {
+      // Invalidate and refetch
+      queryClient.invalidateQueries({ queryKey: ['user'] });
+      toast.success('User updated!');
+    },
+    onError: (error) => {
+      toast.error(error.message);
+    },
+  });
+
+  return (
+    <button onClick={() => mutation.mutate({ name: 'John' })}>
+      Update User
+    </button>
+  );
+}
+
+// Infinite queries (pagination)
+function InfiniteUsersList() {
+  const { data, fetchNextPage, hasNextPage } = useInfiniteQuery({
+    queryKey: ['users'],
+    queryFn: ({ pageParam = 0 }) =>
+      fetch(`/api/users?page=${pageParam}`).then(r => r.json()),
+    getNextPageParam: (lastPage) => lastPage.nextPage,
+  });
+
+  return (
+    <>
+      {data?.pages.map((page) =>
+        page.users.map((user) => <UserCard key={user.id} user={user} />)
+      )}
+      {hasNextPage && (
+        <button onClick={() => fetchNextPage()}>Load More</button>
+      )}
+    </>
+  );
+}
+```
+
+**Why React Query over useState + useEffect:**
+- ✅ Automatic caching & revalidation
+- ✅ Handles loading/error states
+- ✅ Deduplicates requests
+- ✅ Optimistic updates
+- ✅ Pagination & infinite queries
+- ✅ Background refetching
+
+---
+
+### 16.4 Service Workers & PWA
+
+Offline-first apps with service workers.
+
+```typescript
+// Register service worker
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/sw.js').then(registration => {
+    console.log('Service Worker registered:', registration);
+  });
+}
+
+// sw.js - Service Worker
+const CACHE_NAME = 'v1';
+
+// Cache on install
+self.addEventListener('install', (event) => {
+  event.waitUntil(
+    caches.open(CACHE_NAME).then((cache) => {
+      return cache.addAll([
+        '/',
+        '/index.html',
+        '/styles.css',
+        '/app.js',
+        '/offline.html',
+      ]);
+    })
+  );
+});
+
+// Network first, fallback to cache
+self.addEventListener('fetch', (event) => {
+  event.respondWith(
+    fetch(event.request)
+      .then((response) => {
+        // Cache successful responses
+        const cache = caches.open(CACHE_NAME);
+        cache.then((c) => c.put(event.request, response.clone()));
+        return response;
+      })
+      .catch(() => {
+        // Return cached response if network fails
+        return caches.match(event.request)
+          .then(response => response || caches.match('/offline.html'));
+      })
+  );
+});
+
+// Install PWA
+// manifest.json
+{
+  "name": "My App",
+  "short_name": "App",
+  "description": "My awesome app",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#007bff",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    }
+  ]
+}
+```
+
+---
+
+### 16.5 Concurrent Features (useTransition, useDeferredValue)
+
+React 18+ features for non-blocking updates.
+
+```typescript
+// useTransition - for state updates
+function SearchUsers() {
+  const [query, setQuery] = useState('');
+  const [results, setResults] = useState([]);
+  const [isPending, startTransition] = useTransition();
+
+  const handleSearch = (e) => {
+    const value = e.target.value;
+    setQuery(value);
+
+    // Mark state update as non-urgent (low priority)
+    startTransition(async () => {
+      const res = await fetch(`/api/search?q=${value}`);
+      const data = await res.json();
+      setResults(data);
+    });
+  };
+
+  return (
+    <div>
+      <input onChange={handleSearch} placeholder="Search..." />
+      {isPending && <div>Searching...</div>}
+      {results.map(r => <div key={r.id}>{r.name}</div>)}
+    </div>
+  );
+}
+
+// useDeferredValue - for derived state
+function List({ items }) {
+  // Deferred value is low priority
+  const deferredItems = useDeferredValue(items);
+  const isStale = deferredItems !== items;
+
+  return (
+    <ul style={{ opacity: isStale ? 0.6 : 1 }}>
+      {deferredItems.map(item => (
+        <li key={item.id}>{item.name}</li>
+      ))}
+    </ul>
+  );
+}
+```
+
+---
+
+### 16.6 E2E Testing (Cypress/Playwright)
+
+End-to-end testing for real user workflows.
+
+```typescript
+// Cypress test
+describe('E-Commerce Checkout Flow', () => {
+  beforeEach(() => {
+    cy.visit('https://example.com');
+  });
+
+  it('should complete purchase flow', () => {
+    // Search for product
+    cy.get('[data-testid="search-input"]').type('laptop');
+    cy.get('[data-testid="search-button"]').click();
+
+    // Click first product
+    cy.get('[data-testid="product-card"]').first().click();
+    cy.url().should('include', '/products/');
+
+    // Add to cart
+    cy.get('[data-testid="add-to-cart"]').click();
+    cy.get('[data-testid="cart-count"]').should('contain', '1');
+
+    // Go to checkout
+    cy.get('[data-testid="cart-icon"]').click();
+    cy.get('[data-testid="checkout-btn"]').click();
+
+    // Fill checkout form
+    cy.get('[name="email"]').type('test@example.com');
+    cy.get('[name="address"]').type('123 Main St');
+    cy.get('[name="card"]').type('4242424242424242');
+
+    // Submit
+    cy.get('[data-testid="submit-btn"]').click();
+
+    // Verify success
+    cy.url().should('include', '/order-confirmation');
+    cy.get('[data-testid="success-message"]').should('be.visible');
+  });
+});
+
+// Playwright test
+import { test, expect } from '@playwright/test';
+
+test.describe('E-Commerce Checkout', () => {
+  test('should complete purchase', async ({ page }) => {
+    await page.goto('https://example.com');
+
+    // Search
+    await page.fill('[data-testid="search-input"]', 'laptop');
+    await page.click('[data-testid="search-button"]');
+
+    // Click product
+    await page.click('[data-testid="product-card"]');
+    await expect(page).toHaveURL(/products/);
+
+    // Add to cart
+    await page.click('[data-testid="add-to-cart"]');
+
+    // Checkout
+    await page.click('[data-testid="cart-icon"]');
+    await page.click('[data-testid="checkout-btn"]');
+
+    // Form
+    await page.fill('[name="email"]', 'test@example.com');
+    await page.fill('[name="address"]', '123 Main St');
+
+    // Submit
+    await page.click('[data-testid="submit-btn"]');
+
+    // Verify
+    await expect(page).toHaveURL(/order-confirmation/);
+  });
+});
+```
+
+---
+
+### 16.7 Accessibility (a11y) & WCAG
+
+Building accessible web applications.
+
+```typescript
+// Semantic HTML
+<button aria-label="Close menu">×</button>
+<img src="cat.jpg" alt="A cute cat" />
+<label htmlFor="email">Email</label>
+<input id="email" type="email" required aria-required="true" />
+
+// ARIA attributes
+<div role="alert" aria-live="polite">
+  Error: Please fill required fields
+</div>
+
+<div role="progressbar" aria-valuenow={65} aria-valuemin={0} aria-valuemax={100}>
+  65%
+</div>
+
+// Keyboard navigation
+function Modal({ isOpen, onClose }) {
+  useEffect(() => {
+    const handleEscape = (e) => {
+      if (e.key === 'Escape') onClose();
+    };
+
+    if (isOpen) {
+      document.addEventListener('keydown', handleEscape);
+      return () => document.removeEventListener('keydown', handleEscape);
+    }
+  }, [isOpen, onClose]);
+
+  if (!isOpen) return null;
+
+  return (
+    <div role="dialog" aria-modal="true" aria-label="Modal">
+      <button onClick={onClose}>Close</button>
+      {/* content */}
+    </div>
+  );
+}
+
+// Color contrast (WCAG AA: 4.5:1 for text)
+// Use tools like WebAIM Contrast Checker
+
+// Focus management
+function CustomSelect({ options, onSelect }) {
+  const [focused, setFocused] = useState(false);
+
+  return (
+    <div>
+      <button
+        aria-haspopup="listbox"
+        aria-expanded={focused}
+        onClick={() => setFocused(!focused)}
+      >
+        Select Option
+      </button>
+      {focused && (
+        <ul role="listbox">
+          {options.map(opt => (
+            <li
+              key={opt}
+              role="option"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') onSelect(opt);
+              }}
+            >
+              {opt}
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+```
+
+---
+
+### 16.8 Advanced TypeScript Patterns
+
+```typescript
+// Discriminated Unions
+type Result = 
+  | { status: 'success'; data: any }
+  | { status: 'error'; error: Error }
+  | { status: 'pending' };
+
+function handleResult(result: Result) {
+  if (result.status === 'success') {
+    console.log(result.data); // ✅ data is available
+  } else if (result.status === 'error') {
+    console.log(result.error); // ✅ error is available
+  }
+}
+
+// Branded Types
+type UserId = string & { readonly __brand: 'UserId' };
+
+function createUserId(id: string): UserId {
+  return id as UserId;
+}
+
+const userId: UserId = createUserId('123');
+// const id: string = userId; // ❌ Error - can't assign branded type to string
+
+// Conditional Types
+type Flatten<T> = T extends Array<infer U> ? U : T;
+
+type Str = Flatten<string[]>; // string
+type Num = Flatten<number>; // number
+
+// Recursive Types
+type DeepPartial<T> = T extends object ? {
+  [P in keyof T]?: DeepPartial<T[P]>;
+} : T;
+
+type User = { name: string; address: { city: string } };
+type PartialUser = DeepPartial<User>;
+// { name?: string; address?: { city?: string } }
+
+// Extract vs Exclude
+type Union = 'a' | 'b' | 'c';
+type ExtractA = Extract<Union, 'a'>; // 'a'
+type ExcludeA = Exclude<Union, 'a'>; // 'b' | 'c'
+```
+
+---
+
+### 16.9 Micro-frontends & Module Federation
+
+Webpack 5 Module Federation for micro-frontends.
+
+```typescript
+// Host app (main application)
+// webpack.config.js
+module.exports = {
+  mode: 'development',
+  plugins: [
+    new container.ModuleFederationPlugin({
+      name: 'host',
+      filename: 'remoteEntry.js',
+      remotes: {
+        checkout: 'checkout@http://localhost:3001/remoteEntry.js',
+        payment: 'payment@http://localhost:3002/remoteEntry.js',
+      },
+      exposes: {
+        './AuthContext': './src/context/AuthContext'
+      },
+      shared: {
+        react: { singleton: true, requiredVersion: '18.0.0' },
+        'react-dom': { singleton: true, requiredVersion: '18.0.0' }
+      }
+    })
+  ]
+};
+
+// App.tsx
+import React, { Suspense, lazy } from 'react';
+
+const CheckoutModule = lazy(() => import('checkout/Checkout'));
+const PaymentModule = lazy(() => import('payment/Payment'));
+
+export default function App() {
+  return (
+    <div>
+      <h1>E-Commerce Host</h1>
+      <Suspense fallback={<div>Loading...</div>}>
+        <CheckoutModule />
+        <PaymentModule />
+      </Suspense>
+    </div>
+  );
+}
+
+// Remote app (Checkout micro-frontend)
+// webpack.config.js
+module.exports = {
+  mode: 'development',
+  plugins: [
+    new container.ModuleFederationPlugin({
+      name: 'checkout',
+      filename: 'remoteEntry.js',
+      exposes: {
+        './Checkout': './src/Checkout'
+      },
+      shared: {
+        react: { singleton: true, requiredVersion: '18.0.0' },
+        'react-dom': { singleton: true, requiredVersion: '18.0.0' }
+      }
+    })
+  ]
+};
+```
+
+---
+
+### 16.10 Authentication Patterns (JWT, OAuth, SSO)
+
+```typescript
+// JWT Authentication
+function useAuth() {
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    // Check if token exists
+    const token = localStorage.getItem('token');
+    if (token) {
+      // Verify token
+      fetch('/api/auth/verify', {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+        .then(r => r.json())
+        .then(data => {
+          setUser(data.user);
+          setLoading(false);
+        })
+        .catch(() => {
+          localStorage.removeItem('token');
+          setLoading(false);
+        });
+    } else {
+      setLoading(false);
+    }
+  }, []);
+
+  const login = async (email: string, password: string) => {
+    const res = await fetch('/api/auth/login', {
+      method: 'POST',
+      body: JSON.stringify({ email, password })
+    });
+    const { token, user } = await res.json();
+
+    // Store in HttpOnly cookie (secure) or localStorage
+    localStorage.setItem('token', token);
+    setUser(user);
+  };
+
+  const logout = () => {
+    localStorage.removeItem('token');
+    setUser(null);
+  };
+
+  return { user, loading, login, logout };
+}
+
+// OAuth 2.0 with Next.js
+// lib/auth.ts
+import { signIn, signOut, useSession } from 'next-auth/react';
+
+export default function LoginPage() {
+  const { data: session } = useSession();
+
+  if (session) {
+    return (
+      <div>
+        <p>Welcome {session.user.name}</p>
+        <button onClick={() => signOut()}>Sign out</button>
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <button onClick={() => signIn('google')}>Sign in with Google</button>
+      <button onClick={() => signIn('github')}>Sign in with GitHub</button>
+    </div>
+  );
+}
+
+// next-auth.config.ts
+import NextAuth from 'next-auth';
+import GoogleProvider from 'next-auth/providers/google';
+import GitHubProvider from 'next-auth/providers/github';
+
+export const authOptions = {
+  providers: [
+    GoogleProvider({
+      clientId: process.env.GOOGLE_CLIENT_ID,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+    }),
+    GitHubProvider({
+      clientId: process.env.GITHUB_ID,
+      clientSecret: process.env.GITHUB_SECRET,
+    }),
+  ],
+  callbacks: {
+    async jwt({ token, user }) {
+      if (user) token.id = user.id;
+      return token;
+    },
+    async session({ session, token }) {
+      session.user.id = token.id;
+      return session;
+    },
+  },
+};
+```
+
+---
+
+### 16.11 Advanced State Management
+
+```typescript
+// Normalized State + Selectors (Redux pattern)
+interface NormalizedState {
+  users: {
+    [id: string]: User;
+  };
+  posts: {
+    [id: string]: Post;
+  };
+  ui: {
+    selectedUserId: string | null;
+  };
+}
+
+// Selectors
+const selectUser = (state: NormalizedState, userId: string) => 
+  state.users[userId];
+
+const selectUserPosts = (state: NormalizedState, userId: string) =>
+  Object.values(state.posts).filter(post => post.userId === userId);
+
+const selectSelectedUser = (state: NormalizedState) =>
+  state.ui.selectedUserId ? state.users[state.ui.selectedUserId] : null;
+
+// Reselect for memoization
+import { createSelector } from 'reselect';
+
+const selectUsers = (state: NormalizedState) => state.users;
+const selectSelectedUserId = (state: NormalizedState) => state.ui.selectedUserId;
+
+const selectSelectedUserWithPosts = createSelector(
+  [selectUsers, selectSelectedUserId, selectUserPosts],
+  (users, selectedId, userPosts) => ({
+    user: selectedId ? users[selectedId] : null,
+    posts: userPosts
+  })
+);
+```
+
+---
+
+### 16.12 Higher Order Components (HOC) vs Render Props vs Hooks
+
+```typescript
+// HOC Pattern
+function withAuth<P extends object>(Component: React.ComponentType<P>) {
+  return function WithAuthComponent(props: P) {
+    const { user, loading } = useAuth();
+
+    if (loading) return <div>Loading...</div>;
+    if (!user) return <div>Please login</div>;
+
+    return <Component {...props} user={user} />;
+  };
+}
+
+// Usage
+function Dashboard(props: { user: User }) {
+  return <div>Welcome {props.user.name}</div>;
+}
+
+export default withAuth(Dashboard);
+
+// Render Props Pattern
+function Auth({ children }: { children: (auth: AuthContext) => React.ReactNode }) {
+  const auth = useAuth();
+  return children(auth);
+}
+
+// Usage
+<Auth>
+  {({ user, loading }) =>
+    loading ? <div>Loading</div> : <div>Welcome {user.name}</div>
+  }
+</Auth>
+
+// Custom Hook Pattern (Modern approach)
+function useAuth() {
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+  // ...
+  return { user, loading };
+}
+
+// Usage
+function Dashboard() {
+  const { user, loading } = useAuth();
+  return <div>Welcome {user.name}</div>;
+}
+
+// ✅ Hooks are cleaner and recommended
+```
+
+---
+
+### 16.13 Image Optimization & WebP
+
+```typescript
+// Next.js Image optimization
+import Image from 'next/image';
+
+export default function Hero() {
+  return (
+    <Image
+      src="/hero.jpg"
+      alt="Hero"
+      width={1200}
+      height={600}
+      priority // Load eagerly if above fold
+      quality={80} // 80% quality (default 75)
+      placeholder="blur" // Show blur while loading
+      blurDataURL="data:image/..." // Custom blur
+    />
+  );
+}
+
+// Multiple formats with picture
+<picture>
+  <source srcSet="image.webp" type="image/webp" />
+  <source srcSet="image.jpg" type="image/jpeg" />
+  <img src="image.jpg" alt="Image" />
+</picture>
+
+// Responsive images
+<Image
+  src="/image.jpg"
+  alt="Responsive"
+  sizes="(max-width: 768px) 100vw,
+         (max-width: 1200px) 50vw,
+         33vw"
+/>
+```
+
+---
+
+### 16.14 CSS-in-JS vs Tailwind vs CSS Modules
+
+```typescript
+// Styled Components (CSS-in-JS)
+import styled from 'styled-components';
+
+const Button = styled.button`
+  background: blue;
+  color: white;
+  padding: 10px 20px;
+  
+  &:hover {
+    background: darkblue;
+  }
+  
+  @media (max-width: 768px) {
+    padding: 8px 16px;
+  }
+`;
+
+// Tailwind CSS (Utility-first)
+<button className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 md:px-3">
+  Click me
+</button>
+
+// CSS Modules
+import styles from './Button.module.css';
+
+<button className={styles.button}>Click me</button>
+
+// Button.module.css
+.button {
+  background: blue;
+  color: white;
+  padding: 10px 20px;
+}
+
+.button:hover {
+  background: darkblue;
+}
+```
+
+**Comparison:**
+
+| Approach | Bundle Size | Performance | Learning | Reusability |
+|----------|------------|-------------|----------|------------|
+| **CSS-in-JS** | Large | Dynamic | Medium | Medium |
+| **Tailwind** | Small | Static | Medium | High |
+| **CSS Modules** | Small | Static | Low | Medium |
+
+---
+
+### 16.15 Compound Component Pattern
+
+```typescript
+// Compound Components for flexibility
+function Tabs({ children }) {
+  const [activeTab, setActiveTab] = useState(0);
+
+  return (
+    <div>
+      {React.Children.map(children, (child, index) =>
+        React.cloneElement(child, { activeTab, setActiveTab, index })
+      )}
+    </div>
+  );
+}
+
+function TabList({ children, activeTab, setActiveTab }) {
+  return (
+    <div role="tablist">
+      {React.Children.map(children, (child, index) =>
+        React.cloneElement(child, { activeTab, setActiveTab, index })
+      )}
+    </div>
+  );
+}
+
+function Tab({ children, activeTab, setActiveTab, index }) {
+  return (
+    <button
+      role="tab"
+      aria-selected={activeTab === index}
+      onClick={() => setActiveTab(index)}
+    >
+      {children}
+    </button>
+  );
+}
+
+function TabPanel({ children, activeTab, index }) {
+  if (activeTab !== index) return null;
+  return <div role="tabpanel">{children}</div>;
+}
+
+// Usage
+<Tabs>
+  <TabList>
+    <Tab>Tab 1</Tab>
+    <Tab>Tab 2</Tab>
+  </TabList>
+  <TabPanel>Content 1</TabPanel>
+  <TabPanel>Content 2</TabPanel>
+</Tabs>
+```
+
+---
+
+### 16.16 Error Handling & Recovery
+
+```typescript
+// Advanced error handling
+class APIError extends Error {
+  constructor(
+    public statusCode: number,
+    message: string,
+    public data?: any
+  ) {
+    super(message);
+  }
+}
+
+async function fetchData(url: string) {
+  try {
+    const res = await fetch(url);
+
+    if (!res.ok) {
+      throw new APIError(
+        res.status,
+        `API Error: ${res.statusText}`,
+        await res.json()
+      );
+    }
+
+    return await res.json();
+  } catch (error) {
+    if (error instanceof APIError) {
+      // Handle API errors specifically
+      if (error.statusCode === 401) {
+        // Refresh token
+        await refreshToken();
+        return fetchData(url); // Retry
+      }
+      if (error.statusCode === 429) {
+        // Rate limited - wait and retry
+        await new Promise(r => setTimeout(r, 5000));
+        return fetchData(url);
+      }
+    }
+
+    // Log to error tracking
+    Sentry.captureException(error);
+    throw error;
+  }
+}
+
+// Retry logic
+async function retryFetch(url: string, retries = 3) {
+  for (let i = 0; i < retries; i++) {
+    try {
+      return await fetch(url).then(r => r.json());
+    } catch (error) {
+      if (i === retries - 1) throw error;
+      await new Promise(r => setTimeout(r, 1000 * Math.pow(2, i))); // Exponential backoff
+    }
+  }
+}
+```
+
+---
+
+### 16.17 Request Deduplication & Caching
+
+```typescript
+// Request deduplication
+let pendingRequests: Map<string, Promise<any>> = new Map();
+
+async function fetchWithDedup(url: string) {
+  // Return pending request if exists
+  if (pendingRequests.has(url)) {
+    return pendingRequests.get(url);
+  }
+
+  // Create new request
+  const promise = fetch(url)
+    .then(r => r.json())
+    .finally(() => pendingRequests.delete(url));
+
+  pendingRequests.set(url, promise);
+  return promise;
+}
+
+// Advanced caching strategy
+class CacheManager {
+  private cache: Map<string, { data: any; expiry: number }> = new Map();
+
+  set(key: string, data: any, ttl: number = 5 * 60 * 1000) {
+    this.cache.set(key, {
+      data,
+      expiry: Date.now() + ttl
+    });
+  }
+
+  get(key: string) {
+    const item = this.cache.get(key);
+    if (!item) return null;
+
+    if (Date.now() > item.expiry) {
+      this.cache.delete(key);
+      return null;
+    }
+
+    return item.data;
+  }
+
+  clear() {
+    this.cache.clear();
+  }
+}
+```
+
+---
+
+### 16.18 Streaming & Suspense in Next.js
+
+```typescript
+// Streaming SSR with Suspense
+export default function Page() {
+  return (
+    <div>
+      <h1>Dashboard</h1>
+      <Suspense fallback={<div>Loading header...</div>}>
+        <Header />
+      </Suspense>
+      <Suspense fallback={<div>Loading posts...</div>}>
+        <Posts />
+      </Suspense>
+    </div>
+  );
+}
+
+async function Header() {
+  const data = await fetch('https://api.example.com/header');
+  return <div>{/* content */}</div>;
+}
+
+async function Posts() {
+  // This can take longer - user sees other content first
+  const data = await fetch('https://api.example.com/posts');
+  return <div>{/* content */}</div>;
+}
+
+// Server Component with streaming
+export default async function App() {
+  return (
+    <html>
+      <body>
+        <Header /> {/* Streams immediately */}
+        <Suspense fallback={<Skeleton />}>
+          <SlowComponent /> {/* Streams later */}
+        </Suspense>
+      </body>
+    </html>
+  );
+}
+```
+
+---
+
+### 16.19 Advanced API Routes & Middleware
+
+```typescript
+// Advanced API Routes (Next.js)
+import type { NextRequest } from 'next/server';
+import { NextResponse } from 'next/server';
+
+// Middleware
+export function middleware(request: NextRequest) {
+  // Add headers
+  const response = NextResponse.next();
+  response.headers.set('X-Custom-Header', 'value');
+
+  // Verify JWT
+  const token = request.cookies.get('token');
+  if (!token && request.nextUrl.pathname.startsWith('/api/protected')) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  return response;
+}
+
+export const config = {
+  matcher: '/api/:path*',
+};
+
+// API Route with validation & caching
+import { rateLimit } from './rateLimit';
+
+export async function POST(request: NextRequest) {
+  // Rate limiting
+  const ip = request.ip || 'unknown';
+  const { success } = await rateLimit.check(ip, 10); // 10 per minute
+
+  if (!success) {
+    return NextResponse.json(
+      { error: 'Too many requests' },
+      { status: 429 }
+    );
+  }
+
+  const body = await request.json();
+
+  // Validation
+  if (!body.email) {
+    return NextResponse.json(
+      { error: 'Email required' },
+      { status: 400 }
+    );
+  }
+
+  // Business logic
+  const user = await db.user.create(body);
+
+  // Cache response for 1 hour
+  return NextResponse.json(user, {
+    headers: {
+      'Cache-Control': 'public, max-age=3600'
+    }
+  });
+}
+```
+
+---
+
+### 16.20 Web Workers & Service Workers
+
+```typescript
+// Web Worker (offload heavy computation)
+// main.ts
+const worker = new Worker('worker.ts');
+
+function fibonacci() {
+  // Send data to worker
+  worker.postMessage({ n: 40 });
+
+  // Receive result
+  worker.onmessage = (event) => {
+    console.log('Result:', event.data); // No blocking!
+  };
+}
+
+// worker.ts
+self.onmessage = (event) => {
+  const { n } = event.data;
+
+  // Heavy computation doesn't block main thread
+  const result = fib(n);
+
+  // Send result back
+  self.postMessage(result);
+};
+
+function fib(n: number): number {
+  if (n <= 1) return n;
+  return fib(n - 1) + fib(n - 2);
+}
+
+// Service Worker (caching & offline)
+self.addEventListener('fetch', (event) => {
+  event.respondWith(
+    fetch(event.request)
+      .then((response) => {
+        // Cache successful responses
+        const cache = caches.open('v1');
+        cache.then((c) => c.put(event.request, response.clone()));
+        return response;
+      })
+      .catch(() => {
+        // Return cached response if offline
+        return caches.match(event.request)
+          .then(response => response || new Response('Offline'));
+      })
+  );
+});
 ```
 
 ---
