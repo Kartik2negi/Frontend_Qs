@@ -1,0 +1,2783 @@
+---
+title: "Backend Interview Preparation Guide"
+description: "Comprehensive Q&A guide for Node.js, Express.js, MongoDB, AWS backend interview preparation"
+date: "2024-01-01"
+author: "Backend Interview Prep"
+tags: ["nodejs", "express", "mongodb", "aws", "backend", "interview"]
+---
+
+# Backend Interview Preparation Guide
+
+> A comprehensive interview preparation guide for backend engineers with 2+ years of experience.  
+> **Tech Stack:** Node.js | Express.js | MongoDB | AWS
+
+---
+
+## Table of Contents
+
+1. [Node.js Fundamentals](#nodejs-fundamentals)
+2. [Express.js Framework](#expressjs-framework)
+3. [SQL & Relational Databases](#sql--relational-databases)
+4. [MongoDB & Databases](#mongodb--databases)
+5. [REST APIs & HTTP](#rest-apis--http)
+6. [Authentication & Authorization](#authentication--authorization)
+7. [AWS & Cloud Services](#aws--cloud-services)
+8. [System Design & Architecture](#system-design--architecture)
+9. [Performance & Optimization](#performance--optimization)
+10. [Testing & Code Quality](#testing--code-quality)
+11. [Deployment & DevOps](#deployment--devops)
+
+---
+
+## 1. Node.js Fundamentals
+
+### Q1: What is the Node.js event-driven architecture and how does the event loop work?
+
+**A:** Node.js is built on an event-driven, single-threaded architecture. The event loop continuously checks for events and callbacks to execute:
+
+- **Event Loop Phases:** timers → pending callbacks → idle/prepare → poll → check → close callbacks
+- **Async I/O:** Uses libuv library for async I/O operations
+- **Concurrency:** Single-threaded for JavaScript execution but uses worker threads for CPU-intensive operations
+
+The event loop allows Node.js to handle thousands of concurrent connections efficiently without blocking operations.
+
+### Q2: What is the difference between setImmediate() and setTimeout()?
+
+**A:** Both are timer functions but execute at different phases of the event loop:
+
+| Feature | setImmediate() | setTimeout() |
+|---------|---|---|
+| **Execution Phase** | Check phase (after I/O) | Timers phase |
+| **Use Case** | After I/O operations | After specified delay |
+| **Minimum Delay** | Next event loop iteration | ~4ms minimum |
+| **Execution Order** | Executes first when called together | Executes after setImmediate |
+
+```javascript
+console.log('start');
+setTimeout(() => console.log('timeout'), 0);
+setImmediate(() => console.log('immediate'));
+console.log('end');
+
+// Output: start, end, immediate, timeout
+```
+
+### Q3: Explain Promises and async/await. What are their advantages?
+
+**A:** 
+
+**Promises:** Objects representing eventual completion of async operation with `.then()` and `.catch()` methods. Enable better control flow than callbacks.
+
+```javascript
+// Promise approach
+fetchData()
+  .then(data => processData(data))
+  .then(result => saveResult(result))
+  .catch(error => handleError(error));
+```
+
+**async/await:** Syntactic sugar over Promises. Makes async code look synchronous, easier to read and debug.
+
+```javascript
+// async/await approach
+async function handleData() {
+  try {
+    const data = await fetchData();
+    const result = await processData(data);
+    await saveResult(result);
+  } catch (error) {
+    handleError(error);
+  }
+}
+```
+
+**Advantages:**
+- Better error handling with try-catch
+- Cleaner, more readable code
+- Easier debugging (stack traces)
+- Sequential async operations feel natural
+
+### Q4: What is the purpose of middleware in Node.js?
+
+**A:** Middleware is a function with access to request (req), response (res), and next function in the application request-response cycle.
+
+**Common Uses:**
+- Authentication and authorization checks
+- Logging and monitoring requests
+- Data validation and transformation
+- Error handling
+- CORS handling, compression, body parsing
+
+```javascript
+const authMiddleware = (req, res, next) => {
+  if (req.headers.authorization) {
+    req.user = verifyToken(req.headers.authorization);
+    next();
+  } else {
+    res.status(401).send('Unauthorized');
+  }
+};
+```
+
+### Q5: What is callback hell and how do you avoid it?
+
+**A:** Callback hell (pyramid of doom) occurs when callbacks are nested deeply, making code hard to read and maintain.
+
+```javascript
+// ❌ Callback Hell
+getData((error, data) => {
+  if (!error) {
+    processData(data, (error, result) => {
+      if (!error) {
+        saveData(result, (error) => {
+          if (!error) {
+            console.log('Success');
+          }
+        });
+      }
+    });
+  }
+});
+
+// ✅ Using Promises
+getData()
+  .then(data => processData(data))
+  .then(result => saveData(result))
+  .then(() => console.log('Success'))
+  .catch(error => console.error(error));
+
+// ✅ Using async/await
+async function workflow() {
+  try {
+    const data = await getData();
+    const result = await processData(data);
+    await saveData(result);
+    console.log('Success');
+  } catch (error) {
+    console.error(error);
+  }
+}
+```
+
+### Q6: What are streams in Node.js and their advantages?
+
+**A:** Streams are objects that let you read data from source or write data to destination in chunks rather than loading everything into memory.
+
+**Types:**
+- **Readable:** Read data from source
+- **Writable:** Write data to destination
+- **Duplex:** Both readable and writable
+- **Transform:** Modify data while reading/writing
+
+**Advantages:**
+- Memory efficient - process data in chunks
+- Time efficient - start processing before all data received
+- Perfect for large file handling, video/image processing
+
+```javascript
+// Reading large file efficiently with streams
+fs.createReadStream('large-file.txt')
+  .pipe(processStream)
+  .pipe(fs.createWriteStream('output.txt'));
+```
+
+### Q7: Explain the Global Object in Node.js
+
+**A:** The global object is the root namespace in Node.js containing:
+
+| Property | Purpose |
+|----------|---------|
+| `__filename` | Current file's absolute path |
+| `__dirname` | Current directory's absolute path |
+| `process` | Process info (env, argv, exit codes) |
+| `console` | Logging methods |
+| `Buffer` | Binary data handling |
+| `module, exports` | Module system |
+| `setTimeout, setInterval` | Timer functions |
+
+### Q8: What is the module system in Node.js? CommonJS vs ES6 modules?
+
+**A:** Node.js uses modules to organize and reuse code.
+
+**CommonJS (Default):**
+```javascript
+const module = require('./file');
+module.exports = functionName;
+```
+
+**ES6 Modules (with .mjs or "type: module"):**
+```javascript
+import module from './file.js';
+export default functionName;
+```
+
+**Differences:**
+- CommonJS is synchronous, ES6 is asynchronous
+- ES6 supports tree-shaking
+- ES6 has better named exports
+
+### Q9: Explain the Node.js event loop in detail with all phases
+
+**A:** The event loop is the heart of Node.js. It has 6 phases executed in order:
+
+```
+┌───────────────────────────────┐
+│           timers              │ setTimeout, setInterval
+├───────────────────────────────┤
+│     pending callbacks         │ Deferred I/O callbacks
+├───────────────────────────────┤
+│       idle, prepare           │ Internal use
+├───────────────────────────────┤
+│           poll                │ Retrieve new I/O events
+├───────────────────────────────┤
+│           check               │ setImmediate callbacks
+├───────────────────────────────┤
+│      close callbacks          │ Socket close handlers
+└───────────────────────────────┘
+```
+
+**Phase Details:**
+
+1. **Timers Phase:** Execute callbacks scheduled by setTimeout/setInterval
+```javascript
+setTimeout(() => console.log('timer'), 0);
+```
+
+2. **Pending Callbacks:** Execute deferred I/O callbacks
+```javascript
+fs.readFile('file.txt', (err, data) => {
+  // Callback here
+});
+```
+
+3. **Idle, Prepare:** Internal Node.js use only
+
+4. **Poll Phase:** Wait for I/O events, longest phase
+```javascript
+// The event loop will wait here for new events
+// Unless timers/setImmediate are waiting
+```
+
+5. **Check Phase:** Execute setImmediate callbacks
+```javascript
+setImmediate(() => console.log('immediate'));
+```
+
+6. **Close Callbacks:** Close event handlers
+```javascript
+socket.on('close', () => {
+  // Executed here
+});
+```
+
+**Execution Example:**
+```javascript
+console.log('start');
+
+setTimeout(() => console.log('setTimeout'), 0);
+
+Promise.resolve()
+  .then(() => console.log('promise'));
+
+setImmediate(() => console.log('setImmediate'));
+
+console.log('end');
+
+// Output:
+// start
+// end
+// promise        (microtask queue - runs before next phase)
+// setTimeout     (timers phase)
+// setImmediate   (check phase)
+```
+
+**Microtask vs Macrotask:**
+```javascript
+// Microtasks (run before next macrotask phase)
+// - Promises (.then, .catch)
+// - process.nextTick()
+// - MutationObserver
+// - queueMicrotask()
+
+// Macrotasks (one per phase)
+// - setTimeout/setInterval
+// - setImmediate
+// - I/O operations
+// - UI events
+
+// process.nextTick runs before everything in current phase
+process.nextTick(() => console.log('nextTick'));
+Promise.resolve().then(() => console.log('promise'));
+setTimeout(() => console.log('timer'), 0);
+
+// Output: nextTick, promise, timer
+```
+
+### Q10: Explain Concurrency vs Parallelism in Node.js
+
+**A:** These are often confused but are different concepts:
+
+**Concurrency:**
+- Multiple tasks executing in overlapping time periods
+- Not necessarily at the same moment
+- Single-threaded languages can be concurrent
+- Node.js is concurrent through event loop
+
+```javascript
+// Concurrent execution (not parallel)
+async function concurrentExample() {
+  // Both start, but don't run simultaneously
+  const [user, posts] = await Promise.all([
+    fetchUser(),
+    fetchPosts()
+  ]);
+  // Event loop switches between them
+}
+
+// Timeline:
+// Start user fetch ─┐
+//                  ├─ Event loop switches ─┐
+// Start post fetch ┤                       ├─ Back to user
+//                  └─ Event loop switches ─┤
+//                                          └─ Both complete
+```
+
+**Parallelism:**
+- Multiple tasks executing at the exact same moment
+- Requires multiple cores/threads
+- Node.js uses worker threads for parallelism
+
+```javascript
+// Parallel execution using Worker Threads
+const { Worker } = require('worker_threads');
+
+function parallelExample() {
+  const worker = new Worker('./worker.js');
+  
+  // Main thread and worker thread run in parallel
+  worker.on('message', (result) => {
+    console.log('Result:', result);
+  });
+  
+  worker.postMessage({ data: largeDataset });
+}
+
+// worker.js
+const { parentPort } = require('worker_threads');
+
+parentPort.on('message', (msg) => {
+  const result = heavyComputation(msg.data);
+  parentPort.postMessage(result);
+});
+
+// Timeline:
+// Main Thread:    ├─ Task A ─┤ ├─ Task B ─┤ ├─ Task C ─┤
+// Worker Thread:  ├─────── Heavy Compute ───────┤
+// Both run simultaneously on different cores
+```
+
+**Concurrency vs Parallelism Comparison:**
+
+| Aspect | Concurrency | Parallelism |
+|--------|---|---|
+| **Timing** | Overlapping, interleaved | Simultaneous execution |
+| **Cores Needed** | Single core | Multiple cores |
+| **Node.js Default** | Yes (event loop) | No (use Worker threads) |
+| **Context Switching** | CPU switches | Native threading |
+| **Example** | async/await | Worker threads |
+| **For I/O** | Perfect | Overkill |
+| **For CPU** | Bad | Good |
+
+**When to Use:**
+
+```javascript
+// Use Concurrency (async/await) for I/O operations
+async function getMultipleUsers() {
+  // These run concurrently (not parallel)
+  // But much faster than sequential
+  return Promise.all([
+    db.findUser(1),
+    db.findUser(2),
+    db.findUser(3)
+  ]);
+}
+
+// Use Parallelism (Worker Threads) for CPU-intensive tasks
+function processBigData() {
+  const worker = new Worker('./processor.js');
+  
+  // Heavy computation runs in parallel
+  worker.postMessage(largeDataset);
+  
+  worker.on('message', result => {
+    // Main thread still responsive
+  });
+}
+```
+
+---
+
+## 2. Express.js Framework
+
+### Q1: What is Express.js and what problems does it solve?
+
+**A:** Express.js is a lightweight web application framework for Node.js that simplifies building web servers and APIs.
+
+**Problems Solved:**
+- Simplifies HTTP request/response handling
+- Provides routing mechanism for different URLs
+- Middleware support for code reusability
+- Template engine integration for rendering views
+- Built-in utilities for common tasks (parsing, compression, etc.)
+
+### Q2: Explain routing in Express. What are route parameters, query parameters, and body parameters?
+
+**A:**
+
+```javascript
+// Route Parameters: Part of URL path
+app.get('/users/:id', (req, res) => {
+  console.log(req.params.id); // Access route parameter
+});
+
+// Query Parameters: After ? in URL
+// GET /users?page=1&limit=10
+app.get('/users', (req, res) => {
+  console.log(req.query.page, req.query.limit);
+});
+
+// Body Parameters: In request body
+app.post('/users', (req, res) => {
+  console.log(req.body); // Requires body-parser middleware
+});
+```
+
+### Q3: What is the difference between app.use() and route handlers like app.get()?
+
+**A:**
+
+| Feature | app.use() | app.get() |
+|---------|-----------|-----------|
+| **Type** | Middleware | Route handler |
+| **Methods** | All HTTP methods | Specific (GET) |
+| **Routing** | Matches path prefix | Exact path match |
+| **Use Case** | Logging, auth, parsing | Handling specific endpoint |
+
+```javascript
+// Runs for all routes and methods
+app.use(authMiddleware);
+
+// Runs only for GET /api/users
+app.get('/api/users', (req, res) => {
+  res.json(users);
+});
+```
+
+### Q4: How do you handle errors in Express?
+
+**A:** Error handling approaches:
+
+```javascript
+// Try-catch in async route handlers
+app.get('/users/:id', async (req, res, next) => {
+  try {
+    const user = await User.findById(req.params.id);
+    res.json(user);
+  } catch (error) {
+    next(error); // Pass to error handler
+  }
+});
+
+// Error handling middleware (4 parameters)
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(err.status || 500).json({
+    error: err.message
+  });
+});
+
+// Custom error class
+class ValidationError extends Error {
+  constructor(message) {
+    super(message);
+    this.status = 400;
+  }
+}
+```
+
+### Q5: What are Express routers and when would you use them?
+
+**A:** Express routers allow modular route handlers for better code organization.
+
+```javascript
+// users.js
+const router = express.Router();
+
+router.get('/', getAllUsers);
+router.post('/', createUser);
+router.get('/:id', getUserById);
+
+module.exports = router;
+
+// app.js
+app.use('/api/users', userRouter);
+app.use('/api/posts', postRouter);
+```
+
+**Benefits:** Better scalability, easier maintenance, reusability, namespace organization
+
+### Q6: What is CORS and how do you enable it in Express?
+
+**A:** CORS (Cross-Origin Resource Sharing) allows requests from different origins.
+
+```javascript
+const cors = require('cors');
+
+// Enable CORS for all routes
+app.use(cors());
+
+// Configure CORS for specific origins
+app.use(cors({
+  origin: 'http://localhost:3000',
+  methods: ['GET', 'POST'],
+  credentials: true
+}));
+
+// CORS on specific routes
+app.get('/public', cors(), (req, res) => {
+  res.json({ data: 'public' });
+});
+```
+
+### Q7: How do you validate request data in Express?
+
+**A:** Data validation methods:
+
+```javascript
+// Using express-validator
+const { body, validationResult } = require('express-validator');
+
+app.post('/users',
+  body('email').isEmail(),
+  body('age').isInt({ min: 18 }),
+  (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+    // Process valid data
+  }
+);
+
+// Using Joi
+const schema = Joi.object({
+  email: Joi.string().email().required(),
+  age: Joi.number().integer().min(18).required()
+});
+
+const { error, value } = schema.validate(req.body);
+```
+
+---
+
+## 3. SQL & Relational Databases
+
+### Q1: What is SQL and what are the main SQL statements?
+
+**A:** SQL (Structured Query Language) is used to manage relational databases.
+
+**Main Categories:**
+
+**DDL (Data Definition Language):**
+```sql
+-- CREATE: Define new database objects
+CREATE TABLE users (
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  name VARCHAR(100) NOT NULL,
+  email VARCHAR(100) UNIQUE,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- ALTER: Modify existing objects
+ALTER TABLE users ADD COLUMN phone VARCHAR(20);
+
+-- DROP: Delete objects
+DROP TABLE users;
+```
+
+**DML (Data Manipulation Language):**
+```sql
+-- INSERT: Add data
+INSERT INTO users (name, email) VALUES ('John', 'john@example.com');
+
+-- SELECT: Retrieve data
+SELECT * FROM users WHERE age > 18;
+
+-- UPDATE: Modify data
+UPDATE users SET age = 25 WHERE id = 1;
+
+-- DELETE: Remove data
+DELETE FROM users WHERE id = 1;
+```
+
+**DCL (Data Control Language):**
+```sql
+-- GRANT: Give permissions
+GRANT SELECT, INSERT ON users TO user@localhost;
+
+-- REVOKE: Remove permissions
+REVOKE DELETE ON users FROM user@localhost;
+```
+
+**TCL (Transaction Control Language):**
+```sql
+-- COMMIT: Save changes
+COMMIT;
+
+-- ROLLBACK: Undo changes
+ROLLBACK;
+
+-- SAVEPOINT: Create checkpoint
+SAVEPOINT sp1;
+ROLLBACK TO sp1;
+```
+
+### Q2: What are JOINs and their types?
+
+**A:** JOINs combine rows from multiple tables based on related columns.
+
+```sql
+-- Sample Data:
+-- users: [1->John, 2->Jane, 3->Bob]
+-- orders: [1->user1, 2->user1, 3->user2]
+
+-- INNER JOIN: Only matching rows from both tables
+SELECT u.name, o.id
+FROM users u
+INNER JOIN orders o ON u.id = o.user_id;
+-- Result: John (2 orders), Jane (1 order)
+
+-- LEFT JOIN: All from left table + matching from right
+SELECT u.name, COUNT(o.id) as orders
+FROM users u
+LEFT JOIN orders o ON u.id = o.user_id
+GROUP BY u.id;
+-- Result: John (2), Jane (1), Bob (0)
+
+-- RIGHT JOIN: All from right table + matching from left
+SELECT u.name, o.id
+FROM users u
+RIGHT JOIN orders o ON u.id = o.user_id;
+-- Result: Orders that exist (may include NULL users)
+
+-- FULL OUTER JOIN: All rows from both tables
+SELECT u.name, o.id
+FROM users u
+FULL OUTER JOIN orders o ON u.id = o.user_id;
+-- Result: All users and all orders
+
+-- CROSS JOIN: Cartesian product (all combinations)
+SELECT u.name, p.name
+FROM users u
+CROSS JOIN products p;
+-- Result: Every user paired with every product
+```
+
+**Visual Representation:**
+```
+Table A    INNER JOIN    Table B
+  ╔═╗                      ╔═╗
+  ║ ║ A∩B only            ║ ║
+  ╚═╝                      ╚═╝
+
+Table A    LEFT JOIN     Table B
+  ╔═╗                      ╔═╗
+  ║ ║ All A + matched B   ║ ║
+  ╚═╝                      ╚═╝
+
+Table A    FULL JOIN     Table B
+  ╔═╗                      ╔═╗
+  ║ ║ All A + All B       ║ ║
+  ╚═╝                      ╚═╝
+```
+
+### Q3: What are indexes and how do they improve performance?
+
+**A:** Indexes create sorted data structures for faster lookups.
+
+```sql
+-- Create index on single column
+CREATE INDEX idx_email ON users(email);
+
+-- Create composite index (multiple columns)
+CREATE INDEX idx_user_date ON orders(user_id, created_at);
+
+-- Create unique index
+CREATE UNIQUE INDEX idx_unique_email ON users(email);
+
+-- Query execution with index:
+-- Without index: Full table scan O(n)
+-- With index: B-tree search O(log n)
+
+SELECT * FROM users WHERE email = 'john@example.com';
+-- Without index: Scans all 1,000,000 rows
+-- With index: Scans ~20 rows (log2(1,000,000) ≈ 20)
+
+-- Drop index
+DROP INDEX idx_email ON users;
+```
+
+**Index Trade-offs:**
+
+| Benefit | Cost |
+|---------|------|
+| Faster SELECT | Slower INSERT/UPDATE/DELETE |
+| Faster sorting | Extra disk space |
+| Faster filtering | Memory overhead |
+
+```sql
+-- Check index usage
+EXPLAIN SELECT * FROM users WHERE email = 'john@example.com';
+-- Shows if index is used in query plan
+```
+
+### Q4: What are aggregate functions and GROUP BY?
+
+**A:** Aggregate functions compute values across rows.
+
+```sql
+-- Basic aggregate functions
+SELECT 
+  COUNT(*) as total_users,           -- Count rows
+  COUNT(DISTINCT status) as statuses, -- Count unique values
+  SUM(amount) as total_amount,       -- Sum values
+  AVG(age) as average_age,           -- Average
+  MIN(created_at) as oldest,         -- Minimum
+  MAX(created_at) as newest          -- Maximum
+FROM users;
+
+-- GROUP BY: Group rows by column values
+SELECT 
+  status,
+  COUNT(*) as user_count,
+  AVG(age) as avg_age
+FROM users
+GROUP BY status;
+-- Result:
+-- active    | 5000 | 28.5
+-- inactive  | 2000 | 32.1
+
+-- HAVING: Filter grouped results
+SELECT 
+  department,
+  COUNT(*) as emp_count,
+  AVG(salary) as avg_salary
+FROM employees
+GROUP BY department
+HAVING AVG(salary) > 50000;  -- Only departments with avg salary > 50k
+```
+
+### Q5: What is normalization and why is it important?
+
+**A:** Normalization organizes data to reduce redundancy and dependency.
+
+**Normal Forms:**
+
+**1NF (First Normal Form):**
+- Each cell contains single value (no arrays in database)
+- No duplicate columns
+
+```sql
+-- ❌ Not 1NF (skills array)
+CREATE TABLE users (
+  id INT,
+  name VARCHAR(100),
+  skills VARCHAR(100)  -- Contains: "JavaScript, Python, Java"
+);
+
+-- ✅ 1NF (separate table for skills)
+CREATE TABLE user_skills (
+  user_id INT,
+  skill VARCHAR(100)
+);
+```
+
+**2NF (Second Normal Form):**
+- Must be 1NF
+- All non-key columns depend on entire primary key
+
+```sql
+-- ❌ Not 2NF (professor name depends only on prof_id, not student_id)
+CREATE TABLE enrollments (
+  student_id INT,
+  course_id INT,
+  professor_id INT,
+  professor_name VARCHAR(100),  -- Shouldn't be here
+  PRIMARY KEY (student_id, course_id)
+);
+
+-- ✅ 2NF
+CREATE TABLE courses (
+  course_id INT PRIMARY KEY,
+  professor_id INT,
+  professor_name VARCHAR(100)
+);
+
+CREATE TABLE enrollments (
+  student_id INT,
+  course_id INT,
+  PRIMARY KEY (student_id, course_id)
+);
+```
+
+**3NF (Third Normal Form):**
+- Must be 2NF
+- Non-key columns depend only on primary key, not on each other
+
+```sql
+-- ❌ Not 3NF (city depends on country, not directly on user_id)
+CREATE TABLE users (
+  id INT PRIMARY KEY,
+  name VARCHAR(100),
+  country_id INT,
+  country_name VARCHAR(100),  -- Transitive dependency
+  city_name VARCHAR(100)
+);
+
+-- ✅ 3NF
+CREATE TABLE countries (
+  id INT PRIMARY KEY,
+  name VARCHAR(100)
+);
+
+CREATE TABLE users (
+  id INT PRIMARY KEY,
+  name VARCHAR(100),
+  country_id INT FOREIGN KEY
+);
+```
+
+### Q6: What are UNION, INTERSECT, and EXCEPT?
+
+**A:** Set operations combine results from multiple queries.
+
+```sql
+-- UNION: Combine results, remove duplicates
+SELECT email FROM users WHERE status = 'active'
+UNION
+SELECT email FROM newsletter_subscribers;
+-- Returns unique emails from both queries
+
+-- UNION ALL: Combine results, keep duplicates
+SELECT email FROM users
+UNION ALL
+SELECT email FROM newsletter_subscribers;
+-- May include same email twice
+
+-- INTERSECT: Return only common rows
+SELECT email FROM users
+INTERSECT
+SELECT email FROM newsletter_subscribers;
+-- Returns emails that are in BOTH tables
+
+-- EXCEPT: Return rows in first query but not in second
+SELECT email FROM users
+EXCEPT
+SELECT email FROM deleted_accounts;
+-- Returns emails not in deleted_accounts
+```
+
+### Q7: What are subqueries and correlated subqueries?
+
+**A:** Subqueries are queries nested inside other queries.
+
+```sql
+-- Simple subquery
+SELECT name, salary FROM employees
+WHERE salary > (SELECT AVG(salary) FROM employees);
+-- Find employees earning above average
+
+-- Subquery in WHERE clause
+SELECT * FROM users
+WHERE country_id IN (
+  SELECT id FROM countries WHERE continent = 'Asia'
+);
+
+-- Subquery in FROM clause (derived table)
+SELECT country, avg_salary FROM (
+  SELECT country_id, AVG(salary) as avg_salary
+  FROM employees
+  GROUP BY country_id
+) as country_salaries;
+
+-- Correlated subquery (references outer query)
+SELECT e.name, e.salary
+FROM employees e
+WHERE e.salary > (
+  SELECT AVG(salary) 
+  FROM employees 
+  WHERE department_id = e.department_id
+);
+-- Find employees earning above their department average
+-- Subquery runs for EACH row in outer query (slower)
+
+-- Performance: Use JOIN instead of correlated subquery
+SELECT e.name, e.salary
+FROM employees e
+JOIN (
+  SELECT department_id, AVG(salary) as avg_sal
+  FROM employees
+  GROUP BY department_id
+) as dept_avg ON e.department_id = dept_avg.department_id
+WHERE e.salary > dept_avg.avg_sal;
+```
+
+---
+
+## 4. MongoDB & Databases
+
+### Q1: What is MongoDB and how is it different from SQL databases?
+
+**A:**
+
+| Feature | MongoDB (NoSQL) | SQL Databases |
+|---------|---|---|
+| **Schema** | Flexible - different structures | Fixed schema |
+| **Data Type** | JSON-like documents | Tables with columns |
+| **Scalability** | Horizontal (sharding) | Vertical |
+| **Relationships** | Embedded documents | Foreign keys & JOINs |
+| **ACID** | Multi-doc transactions (v4.0+) | Full ACID compliance |
+
+**When to use MongoDB:**
+- Unstructured/semi-structured data
+- Rapid development with changing schema
+- Need for horizontal scaling
+- Document-oriented workflows
+
+### Q2: Explain the CRUD operations in MongoDB
+
+**A:**
+
+```javascript
+// Create
+await User.insertOne({ name: 'John', age: 25 });
+await User.insertMany([{ name: 'Jane' }, { name: 'Bob' }]);
+
+// Read
+await User.find({ age: { $gt: 20 } });
+await User.findOne({ email: 'john@example.com' });
+await User.findById('60d5ec49c1234567890abcdef');
+
+// Update
+await User.updateOne({ _id: 123 }, { $set: { age: 26 } });
+await User.updateMany({ status: 'inactive' }, { $set: { status: 'active' } });
+await User.replaceOne({ _id: 123 }, { name: 'Jane', age: 30 });
+
+// Delete
+await User.deleteOne({ _id: 123 });
+await User.deleteMany({ status: 'deleted' });
+```
+
+### Q3: What is Mongoose and what advantages does it provide?
+
+**A:** Mongoose is an ODM (Object Document Mapper) library for MongoDB and Node.js.
+
+```javascript
+const userSchema = new Schema({
+  name: { type: String, required: true },
+  email: { type: String, unique: true },
+  age: { type: Number, min: 18 }
+});
+
+const User = mongoose.model('User', userSchema);
+```
+
+**Advantages:**
+- Schema validation and type casting
+- Middleware hooks (pre/post for lifecycle events)
+- Built-in and custom validators
+- Cleaner query syntax than raw MongoDB
+- Automatic connection pooling
+
+### Q4: What are indexes in MongoDB and why are they important?
+
+**A:** Indexes are data structures that improve query performance by creating ordered references.
+
+```javascript
+// Create indexes
+db.users.createIndex({ email: 1 }); // Ascending
+db.users.createIndex({ email: 1, age: -1 }); // Compound index
+db.users.createIndex({ email: 1 }, { unique: true });
+
+// In Mongoose
+userSchema.index({ email: 1 });
+userSchema.index({ email: 1, age: -1 });
+```
+
+**Importance:**
+- Dramatically speed up query execution
+- Enable efficient sorting and range queries
+- Unique indexes prevent duplicates
+- Trade-off: Slower writes since indexes updated
+
+### Q5: Explain aggregation pipeline in MongoDB
+
+**A:** Aggregation pipeline processes documents in stages, each stage passing output to next.
+
+```javascript
+db.orders.aggregate([
+  // Stage 1: Filter
+  { $match: { status: 'completed' } },
+  
+  // Stage 2: Group and sum
+  { $group: {
+    _id: '$customer_id',
+    total: { $sum: '$amount' },
+    count: { $sum: 1 }
+  }},
+  
+  // Stage 3: Sort
+  { $sort: { total: -1 } },
+  
+  // Stage 4: Limit
+  { $limit: 10 }
+]);
+```
+
+**Common Stages:**
+- `$match` - Filter documents
+- `$group` - Group and aggregate
+- `$project` - Select/transform fields
+- `$sort` - Sort results
+- `$limit` - Limit results
+- `$lookup` - Join with other collections
+- `$unwind` - Deconstruct arrays
+
+### Q6: What are transactions in MongoDB and when would you use them?
+
+**A:** Transactions ensure multiple operations complete atomically (all-or-nothing).
+
+```javascript
+const session = await mongoose.startSession();
+session.startTransaction();
+
+try {
+  await Account.updateOne(
+    { _id: accountA },
+    { $inc: { balance: -100 } },
+    { session }
+  );
+  
+  await Account.updateOne(
+    { _id: accountB },
+    { $inc: { balance: 100 } },
+    { session }
+  );
+  
+  await session.commitTransaction();
+} catch (error) {
+  await session.abortTransaction();
+  throw error;
+}
+```
+
+**When to use:** Money transfers, inventory management, any multi-step operation requiring consistency
+
+### Q7: What is connection pooling and how does it improve performance?
+
+**A:** Connection pooling maintains a pool of reusable database connections instead of creating new ones.
+
+**Benefits:**
+- Reduces connection overhead
+- Improves response time
+- Better resource utilization
+- Handles concurrent requests efficiently
+
+```javascript
+// Mongoose handles connection pooling automatically
+mongoose.connect('mongodb://localhost:27017/mydb', {
+  maxPoolSize: 10,
+  minPoolSize: 5
+});
+```
+
+### Q8: Explain ACID Properties in Databases
+
+**A:** ACID ensures reliable database transactions:
+
+#### **A - Atomicity**
+All or nothing - transaction either fully completes or fully fails.
+
+```javascript
+// Example: Money transfer between accounts
+// EITHER both succeed OR both fail, never partial
+
+const session = await db.startSession();
+session.startTransaction();
+
+try {
+  // Debit account A
+  await Account.updateOne(
+    { _id: accountA },
+    { $inc: { balance: -1000 } },
+    { session }
+  );
+  
+  // Credit account B
+  await Account.updateOne(
+    { _id: accountB },
+    { $inc: { balance: 1000 } },
+    { session }
+  );
+  
+  await session.commitTransaction();
+} catch (error) {
+  // If any operation fails, BOTH are rolled back
+  await session.abortTransaction();
+  throw error;
+}
+
+// Before: A=$1000, B=$2000
+// Success: A=$0, B=$3000
+// Failure: A=$1000, B=$2000 (both unchanged)
+```
+
+#### **C - Consistency**
+Database goes from one valid state to another valid state.
+
+```javascript
+// Example: Inventory management
+// Total inventory must always equal sum of all warehouse quantities
+
+// ❌ Inconsistent state (violates business rules)
+// Total: 100, Warehouse A: 30, Warehouse B: 50, Warehouse C: 10
+// Sum: 30 + 50 + 10 = 90 ≠ 100
+
+// ✅ Consistent state
+// Total: 100, Warehouse A: 30, Warehouse B: 50, Warehouse C: 20
+// Sum: 30 + 50 + 20 = 100
+
+// Database constraints ensure consistency:
+userSchema.pre('save', async function() {
+  const total = this.experience + this.projects;
+  if (total > this.maxAllowed) {
+    throw new Error('Consistency violation');
+  }
+});
+```
+
+#### **I - Isolation**
+Concurrent transactions don't interfere with each other.
+
+```javascript
+// Example: Two transactions at same time
+
+// Transaction 1: Read user's balance
+const balance1 = await Account.findById(userId);
+console.log('Balance:', balance1);
+
+// Transaction 2 (simultaneous): Withdraw money
+await Account.updateOne(
+  { _id: userId },
+  { $inc: { balance: -500 } }
+);
+
+// With proper isolation, Transaction 1 either:
+// - Sees balance BEFORE withdraw (Read Uncommitted)
+// - Sees balance AFTER withdraw (Read Committed - default)
+// - Never sees intermediate state (Repeatable Read)
+// - Completely isolated (Serializable)
+
+// Isolation Levels:
+// Read Uncommitted: Dirty reads possible
+// Read Committed: No dirty reads
+// Repeatable Read: Phantom reads possible
+// Serializable: Complete isolation (slowest)
+```
+
+#### **D - Durability**
+Once committed, data survives any failure.
+
+```javascript
+// Example: Disk failure shouldn't lose committed data
+
+await db.transaction(async (tx) => {
+  await tx.users.create({ name: 'John' });
+  // Data is logged to disk
+  
+  // Even if server crashes now:
+  // - Data is recovered from logs on restart
+  // - Transaction is either fully replayed or fully rolled back
+});
+
+// Durability mechanisms:
+// - Write-ahead logging (WAL)
+// - Disk sync after commit
+// - Replication to other servers
+```
+
+**ACID in Different Databases:**
+
+| Property | SQL | MongoDB | NoSQL |
+|----------|-----|---------|-------|
+| **Atomicity** | Single row | Multi-doc (4.0+) | Limited |
+| **Consistency** | Enforced | Schema validation | Application level |
+| **Isolation** | Configurable levels | Snapshot isolation | Limited |
+| **Durability** | Guaranteed | Configurable | Varies |
+
+**Trade-offs:**
+
+```javascript
+// ACID is slower but safer
+// - Write-ahead logging overhead
+// - Lock contention
+// - Coordination overhead
+
+// For high-speed, distributed systems:
+// - Eventual consistency (NoSQL)
+// - Per-document atomicity
+// - Acceptance of temporary inconsistency
+
+// Example: Social media likes
+// 100 million likes/second is impossible with full ACID
+// Solution: Eventual consistency
+// - Count likes distributed globally
+// - Sync every few seconds
+// - Users see slightly stale counts
+```
+
+---
+
+## 5. REST APIs & HTTP
+
+### Q1: What is REST and its core principles?
+
+**A:** REST (Representational State Transfer) is an architectural style for networked applications.
+
+**Core Principles:**
+1. **Client-Server:** Clear separation of concerns
+2. **Statelessness:** Each request contains all necessary info
+3. **Cacheability:** Responses mark themselves as cacheable
+4. **Uniform Interface:** Consistent resource representation
+5. **Layered System:** Hierarchical architecture
+
+### Q2: Explain HTTP methods and their idempotency
+
+**A:**
+
+| Method | Idempotent | Safe | Cacheable | Purpose |
+|--------|-----------|------|-----------|---------|
+| GET | Yes | Yes | Yes | Retrieve resource |
+| POST | No | No | No | Create resource |
+| PUT | Yes | No | No | Replace resource |
+| PATCH | No* | No | No | Partial update |
+| DELETE | Yes | No | No | Remove resource |
+
+```javascript
+// GET - Safe and idempotent
+GET /api/users/1
+
+// POST - Neither safe nor idempotent (creates new each time)
+POST /api/users
+body: { name: 'John' }
+
+// PUT - Idempotent (replaces entire resource)
+PUT /api/users/1
+body: { name: 'Jane', email: 'jane@example.com' }
+
+// PATCH - May not be idempotent
+PATCH /api/users/1
+body: { name: 'Jane' }
+
+// DELETE - Idempotent
+DELETE /api/users/1
+```
+
+### Q3: What are HTTP status codes and examples?
+
+**A:**
+
+| Code | Category | Examples |
+|------|----------|----------|
+| 2xx | Success | 200 OK, 201 Created, 204 No Content |
+| 3xx | Redirection | 301 Moved, 302 Found, 304 Not Modified |
+| 4xx | Client Error | 400 Bad Request, 401 Unauthorized, 403 Forbidden, 404 Not Found |
+| 5xx | Server Error | 500 Internal Error, 502 Bad Gateway, 503 Unavailable |
+
+```javascript
+// Example responses
+res.status(200).json({ data: user }); // Success
+res.status(201).json({ id: newUserId }); // Created
+res.status(400).json({ error: 'Invalid input' }); // Bad Request
+res.status(404).json({ error: 'Not found' }); // Not Found
+res.status(500).json({ error: 'Server error' }); // Server Error
+```
+
+### Q4: What is the difference between RESTful API and GraphQL?
+
+**A:**
+
+| Feature | REST | GraphQL |
+|---------|------|---------|
+| **Endpoints** | Multiple | Single endpoint |
+| **Data Fetching** | Fixed structure | Client specifies exact data |
+| **Over-fetching** | Common | Prevented |
+| **Under-fetching** | Common | Prevented |
+| **Complexity** | Simple | More complex |
+
+**REST:** Multiple endpoints, each returning fixed data structure
+**GraphQL:** Single endpoint, client specifies exact data needed
+
+### Q5: How do you handle pagination in REST APIs?
+
+**A:**
+
+```javascript
+// Offset-based pagination
+GET /api/users?page=1&limit=10
+
+app.get('/users', (req, res) => {
+  const page = req.query.page || 1;
+  const limit = req.query.limit || 10;
+  const skip = (page - 1) * limit;
+  
+  const users = User.find().skip(skip).limit(limit);
+  res.json(users);
+});
+
+// Cursor-based pagination (better for performance)
+GET /api/users?cursor=abc123&limit=10
+
+app.get('/users', (req, res) => {
+  const cursor = req.query.cursor;
+  const limit = req.query.limit || 10;
+  
+  let query = {};
+  if (cursor) {
+    query._id = { $gt: cursor };
+  }
+  
+  const users = await User.find(query).limit(limit + 1);
+  const hasMore = users.length > limit;
+  
+  res.json({
+    data: users.slice(0, limit),
+    nextCursor: hasMore ? users[limit]._id : null
+  });
+});
+```
+
+---
+
+## 6. Authentication & Authorization
+
+### Q1: What is the difference between authentication and authorization?
+
+**A:**
+
+- **Authentication:** Verifying user identity (who you are)
+  - Login with username/password
+  - Multi-factor authentication
+  
+- **Authorization:** Determining resource access (what you can do)
+  - Admin can delete users
+  - User can only edit own profile
+
+### Q2: Explain JWT (JSON Web Tokens) and how it works
+
+**A:** JWT is a stateless authentication mechanism with structure: `Header.Payload.Signature`
+
+```javascript
+// User login
+app.post('/login', async (req, res) => {
+  const user = await User.findOne({ email: req.body.email });
+  
+  if (!user || !await user.comparePassword(req.body.password)) {
+    return res.status(401).json({ error: 'Invalid credentials' });
+  }
+  
+  const token = jwt.sign(
+    { id: user._id, email: user.email },
+    process.env.JWT_SECRET,
+    { expiresIn: '1h' }
+  );
+  
+  res.json({ token });
+});
+
+// Verify JWT
+const authMiddleware = (req, res, next) => {
+  const token = req.headers.authorization?.split(' ')[1];
+  
+  if (!token) return res.status(401).json({ error: 'No token' });
+  
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    req.user = decoded;
+    next();
+  } catch (error) {
+    res.status(401).json({ error: 'Invalid token' });
+  }
+};
+```
+
+**Advantages:**
+- Stateless (scalable)
+- Works across domains
+- CORS-friendly
+- Reduced server load
+
+### Q3: What is OAuth2 and when would you use it?
+
+**A:** OAuth2 allows users to authenticate via third-party providers (Google, GitHub, Facebook).
+
+**Use Cases:**
+- Social login
+- Delegated access
+- Third-party integrations
+
+**Common Flows:**
+- Authorization Code Flow (most secure for web)
+- Implicit Flow (legacy)
+- Client Credentials Flow (service-to-service)
+
+### Q4: What is the difference between session-based and token-based authentication?
+
+**A:**
+
+| Feature | Session-Based | Token-Based |
+|---------|---|---|
+| **Storage** | Server side | Client side |
+| **Scalability** | Limited (needs shared storage) | Better (stateless) |
+| **Mobile-friendly** | Less ideal | Better |
+| **Database Hits** | Yes (every request) | No (verify only) |
+| **Security** | HTTPOnly cookies safer | Vulnerable to XSS |
+
+```javascript
+// Session-based
+app.post('/login', (req, res) => {
+  req.session.userId = user._id;
+  res.redirect('/dashboard');
+});
+
+// Token-based
+app.post('/login', (req, res) => {
+  const token = jwt.sign({ id: user._id }, secret);
+  res.json({ token });
+});
+```
+
+### Q5: How do you implement password hashing securely?
+
+**A:**
+
+```javascript
+const bcrypt = require('bcrypt');
+
+// Hashing password on registration
+userSchema.pre('save', async function(next) {
+  if (!this.isModified('password')) return next();
+  
+  this.password = await bcrypt.hash(this.password, 10);
+  next();
+});
+
+// Comparing password on login
+userSchema.methods.comparePassword = async function(password) {
+  return await bcrypt.compare(password, this.password);
+};
+```
+
+**Popular Libraries:**
+- **bcrypt:** Most popular, slow by design (resistant to brute force)
+- **scrypt:** Memory-hard, resistant to GPU attacks
+- **Argon2:** Most modern and secure
+
+### Q6: What are refresh tokens and why are they needed?
+
+**A:** Refresh tokens are long-lived credentials for obtaining new access tokens.
+
+```javascript
+// Login generates both tokens
+const tokens = jwt.generateTokenPair(user);
+// { accessToken: '...', refreshToken: '...' }
+
+// Store refresh token (secure httpOnly cookie)
+res.cookie('refreshToken', tokens.refreshToken, {
+  httpOnly: true,
+  secure: true,
+  sameSite: 'strict'
+});
+
+// Use refresh token to get new access token
+app.post('/refresh', (req, res) => {
+  const refreshToken = req.cookies.refreshToken;
+  
+  try {
+    const decoded = jwt.verify(refreshToken, REFRESH_SECRET);
+    const newAccessToken = jwt.sign(
+      { id: decoded.id },
+      ACCESS_SECRET,
+      { expiresIn: '15m' }
+    );
+    res.json({ accessToken: newAccessToken });
+  } catch (error) {
+    res.status(401).json({ error: 'Invalid refresh token' });
+  }
+});
+```
+
+**Benefits:**
+- Access tokens have short expiration (security)
+- Seamless user experience without re-login
+- Ability to revoke refresh tokens
+
+---
+
+## 7. AWS & Cloud Services
+
+### Q1: What are the main AWS services used for backend development?
+
+**A:**
+
+| Service | Purpose |
+|---------|---------|
+| **EC2** | Virtual servers for applications |
+| **Lambda** | Serverless function execution |
+| **RDS** | Managed relational databases |
+| **DynamoDB** | NoSQL database service |
+| **S3** | Object storage for files |
+| **SQS** | Message queue for async processing |
+| **SNS** | Pub/Sub messaging |
+| **CloudFront** | CDN for content distribution |
+
+### Q2: What is AWS Lambda and its advantages?
+
+**A:** Lambda is serverless compute—write code without managing servers.
+
+```javascript
+// Lambda handler
+exports.handler = async (event, context) => {
+  console.log('Received event:', event);
+  
+  // event: Input data
+  // context: Runtime information
+  
+  return {
+    statusCode: 200,
+    body: JSON.stringify({ message: 'Hello' })
+  };
+};
+```
+
+**Advantages:**
+- Pay only for execution time (per 100ms)
+- Automatic scaling
+- No server management
+- Built-in fault tolerance
+- Easy integration with AWS services
+
+**Limitations:**
+- Cold start latency (100-1000ms for first invocation)
+- Max execution time: 15 minutes
+- Limited memory: Up to 10GB
+- Ephemeral storage: 512MB to 10GB
+
+### Q3: Explain Lambda cold starts and how to optimize them
+
+**A:** Cold start is delay when Lambda needs to initialize a new container.
+
+**Cold Start Causes:**
+```javascript
+// Cold Start Timeline:
+// 1. Download code (~30ms)
+// 2. Start container (~100-500ms depending on language)
+// 3. Initialize runtime (~50-200ms)
+// 4. Run initialization code (~variable)
+// 5. Execute handler
+
+// Node.js cold start: ~200-500ms
+// Python cold start: ~150-300ms
+// Java cold start: ~1-2 seconds (slowest)
+```
+
+**Optimization Techniques:**
+
+```javascript
+// 1. Keep deployment package small
+// ❌ Include all node_modules (50MB)
+// ✅ Use Lambda layers, include only production dependencies
+
+// 2. Optimize initialization code
+// ❌ Initialize on every invocation
+const db = new DatabaseConnection(); // SLOW!
+
+exports.handler = async (event) => {
+  const users = await db.query('SELECT * FROM users');
+};
+
+// ✅ Initialize outside handler (reused across invocations)
+const db = new DatabaseConnection();
+
+exports.handler = async (event) => {
+  const users = await db.query('SELECT * FROM users');
+};
+
+// 3. Use provisioned concurrency
+// Keeps containers warm for predictable traffic
+// Costs $0.015 per provisioned concurrency per hour
+
+// 4. Use Lambda SnapStart (Java only)
+// Saves container snapshot, faster startup
+
+// 5. Use lightweight languages
+// Node.js faster than Python faster than Java
+
+// 6. Connection pooling
+const pool = mysql.createPool({
+  connectionLimit: 5,
+  host: 'db.example.com',
+  user: 'lambda',
+  password: process.env.DB_PASSWORD,
+  database: 'mydb'
+});
+
+exports.handler = async (event) => {
+  const connection = await pool.getConnection();
+  // Use connection
+};
+```
+
+### Q4: How do you handle state in Lambda?
+
+**A:** Lambda is stateless, but you can persist state externally.
+
+```javascript
+// State storage options:
+
+// 1. DynamoDB (fast, consistent)
+const AWS = require('aws-sdk');
+const dynamodb = new AWS.DynamoDB.DocumentClient();
+
+exports.handler = async (event) => {
+  // Read state
+  const state = await dynamodb.get({
+    TableName: 'LambdaState',
+    Key: { userId: event.userId }
+  }).promise();
+  
+  // Update state
+  await dynamodb.put({
+    TableName: 'LambdaState',
+    Item: {
+      userId: event.userId,
+      lastUpdate: new Date(),
+      data: { /* ... */ }
+    }
+  }).promise();
+};
+
+// 2. S3 (cheap, slower)
+const s3 = new AWS.S3();
+
+const state = await s3.getObject({
+  Bucket: 'my-bucket',
+  Key: `state/${userId}.json`
+}).promise();
+
+// 3. ElastiCache/Redis (fast, ephemeral)
+const redis = new Redis({
+  host: process.env.REDIS_HOST,
+  port: 6379
+});
+
+await redis.set(`state:${userId}`, JSON.stringify(state));
+
+// 4. RDS (durable, slower)
+const db = new Database();
+const state = await db.query('SELECT * FROM states WHERE user_id = ?', [userId]);
+```
+
+### Q5: How do you manage environment variables and secrets in Lambda?
+
+**A:**
+
+```javascript
+// 1. Environment Variables (visible in logs, not for secrets)
+exports.handler = async (event) => {
+  const apiKey = process.env.API_KEY; // ❌ Don't use for secrets!
+  const region = process.env.AWS_REGION; // ✅ OK for non-sensitive
+};
+
+// 2. AWS Secrets Manager (secure, recommended)
+const AWS = require('aws-sdk');
+const secretsManager = new AWS.SecretsManager();
+
+let cachedSecret;
+
+exports.handler = async (event) => {
+  // Cache secret to avoid repeated calls
+  if (!cachedSecret) {
+    const secret = await secretsManager.getSecretValue({
+      SecretId: 'my-db-password'
+    }).promise();
+    
+    cachedSecret = JSON.parse(secret.SecretString);
+  }
+  
+  const password = cachedSecret.password;
+};
+
+// 3. Parameter Store (free, good for non-sensitive config)
+const ssm = new AWS.SSM();
+
+const param = await ssm.getParameter({
+  Name: '/myapp/db-host',
+  WithDecryption: true
+}).promise();
+```
+
+### Q6: What is Lambda Layers and when to use them?
+
+**A:** Layers package code/libraries used by multiple Lambda functions.
+
+```javascript
+// Layer structure:
+// layer.zip
+// ├── nodejs/
+// │   └── node_modules/
+// │       └── axios/
+// │       └── lodash/
+// │       └── etc.
+
+// Create layer
+// aws lambda publish-layer-version \
+//   --layer-name my-dependencies \
+//   --zip-file fileb://layer.zip \
+//   --compatible-runtimes nodejs18.x
+
+// Use in Lambda
+// 1. In console: Add layer to function
+// 2. Layer is mounted at /opt/nodejs/node_modules
+
+const axios = require('axios'); // Loaded from layer
+const lodash = require('lodash'); // Loaded from layer
+
+exports.handler = async (event) => {
+  // Both libraries available
+};
+
+// Benefits:
+// - Reuse dependencies across functions
+// - Reduce deployment package size
+// - Update dependencies without redeploying functions
+// - Versioning for different dependency versions
+```
+
+### Q7: How do you handle errors and retries in Lambda?
+
+**A:**
+
+```javascript
+// Try-catch error handling
+exports.handler = async (event) => {
+  try {
+    const result = await processOrder(event.orderId);
+    return {
+      statusCode: 200,
+      body: JSON.stringify(result)
+    };
+  } catch (error) {
+    console.error('Error:', error);
+    
+    // Log to CloudWatch
+    // Send to error tracking service
+    
+    return {
+      statusCode: 500,
+      body: JSON.stringify({ error: 'Internal server error' })
+    };
+  }
+};
+
+// Retry logic with exponential backoff
+async function retryWithBackoff(fn, maxRetries = 3) {
+  for (let i = 0; i < maxRetries; i++) {
+    try {
+      return await fn();
+    } catch (error) {
+      if (i === maxRetries - 1) throw error;
+      
+      // Exponential backoff: 100ms, 200ms, 400ms
+      const delay = Math.pow(2, i) * 100;
+      await new Promise(resolve => setTimeout(resolve, delay));
+    }
+  }
+}
+
+// Use in Lambda
+exports.handler = async (event) => {
+  const result = await retryWithBackoff(
+    () => callExternalAPI(event.data),
+    3
+  );
+};
+
+// Dead Letter Queue for failed messages
+// Configure DLQ on Lambda (SNS or SQS)
+// Failed invocations sent to DLQ for later processing
+
+// CloudWatch Alarms for errors
+// alarm.create({
+//   MetricName: 'Errors',
+//   Statistic: 'Sum',
+//   Period: 300,
+//   EvaluationPeriods: 1,
+//   Threshold: 5,
+//   ComparisonOperator: 'GreaterThanThreshold'
+// });
+```
+
+---
+
+### Q3: Explain S3 buckets and their use cases
+
+**A:** S3 stores unlimited objects in buckets.
+
+```javascript
+const AWS = require('aws-sdk');
+const s3 = new AWS.S3();
+
+// Upload file
+await s3.putObject({
+  Bucket: 'my-bucket',
+  Key: 'path/to/file',
+  Body: fileContent,
+  ContentType: 'image/jpeg'
+}).promise();
+
+// Download file
+const data = await s3.getObject({
+  Bucket: 'my-bucket',
+  Key: 'path/to/file'
+}).promise();
+
+// Delete file
+await s3.deleteObject({
+  Bucket: 'my-bucket',
+  Key: 'path/to/file'
+}).promise();
+```
+
+**Use Cases:** User uploads, backups, static assets, data archival, logs
+
+**Features:** Versioning, encryption, ACLs, lifecycle policies, cross-region replication
+
+### Q4: What are S3 storage classes and when to use them?
+
+**A:** Storage classes offer different performance and cost trade-offs.
+
+| Storage Class | Cost | Retrieval | Use Case |
+|---|---|---|---|
+| **S3 Standard** | Highest | Immediate | Frequently accessed data |
+| **S3 Intelligent-Tiering** | Variable | Immediate | Unknown access patterns |
+| **S3 Standard-IA** | Lower | 1-3 minutes | Infrequent access, backups |
+| **S3 Glacier Instant** | Lower | Instant | Archive, compliance |
+| **S3 Glacier Flexible** | Lowest | 1-12 hours | Long-term archive |
+| **S3 Deep Archive** | Lowest | 12+ hours | 7-10 year compliance |
+
+```javascript
+// Create bucket with specific storage class
+await s3.putObject({
+  Bucket: 'my-bucket',
+  Key: 'archive/file.zip',
+  Body: data,
+  StorageClass: 'GLACIER'  // Different storage classes
+}).promise();
+
+// Lifecycle policy: Auto-move to cheaper storage
+{
+  "Rules": [
+    {
+      "Filter": { "Prefix": "logs/" },
+      "Transitions": [
+        {
+          "Days": 30,
+          "StorageClass": "STANDARD_IA"  // Move after 30 days
+        },
+        {
+          "Days": 90,
+          "StorageClass": "GLACIER"      // Move after 90 days
+        }
+      ],
+      "Expiration": {
+        "Days": 365                      // Delete after 1 year
+      }
+    }
+  ]
+}
+```
+
+### Q5: Explain S3 versioning and how it works
+
+**A:** Versioning keeps multiple versions of objects.
+
+```javascript
+// Enable versioning on bucket
+await s3.putBucketVersioning({
+  Bucket: 'my-bucket',
+  VersioningConfiguration: {
+    Status: 'Enabled'
+  }
+}).promise();
+
+// Upload file (v1)
+await s3.putObject({
+  Bucket: 'my-bucket',
+  Key: 'document.txt',
+  Body: 'Version 1'
+}).promise();
+// Returns: VersionId = 'abc123'
+
+// Upload same file again (v2)
+await s3.putObject({
+  Bucket: 'my-bucket',
+  Key: 'document.txt',
+  Body: 'Version 2'
+}).promise();
+// Returns: VersionId = 'def456'
+
+// Retrieve specific version
+const doc = await s3.getObject({
+  Bucket: 'my-bucket',
+  Key: 'document.txt',
+  VersionId: 'abc123'  // Get v1
+}).promise();
+
+// Delete specific version (permanent)
+await s3.deleteObject({
+  Bucket: 'my-bucket',
+  Key: 'document.txt',
+  VersionId: 'abc123'
+}).promise();
+
+// Delete without VersionId (creates delete marker)
+await s3.deleteObject({
+  Bucket: 'my-bucket',
+  Key: 'document.txt'
+}).promise();
+// Still retrievable with VersionId
+
+// List all versions
+const versions = await s3.listObjectVersions({
+  Bucket: 'my-bucket'
+}).promise();
+// Returns: [
+//   { Key: 'document.txt', VersionId: 'abc123' },
+//   { Key: 'document.txt', VersionId: 'def456' }
+// ]
+```
+
+### Q6: What is S3 presigned URLs and when to use them?
+
+**A:** Presigned URLs grant temporary access to private S3 objects.
+
+```javascript
+// Generate presigned URL for upload
+const uploadUrl = s3.getSignedUrl('putObject', {
+  Bucket: 'my-bucket',
+  Key: 'uploads/user-123/photo.jpg',
+  ContentType: 'image/jpeg',
+  Expires: 3600  // Valid for 1 hour
+});
+
+// Client uses URL to upload directly to S3
+// curl -X PUT -d @photo.jpg uploadUrl
+
+// Generate presigned URL for download
+const downloadUrl = s3.getSignedUrl('getObject', {
+  Bucket: 'my-bucket',
+  Key: 'documents/invoice.pdf',
+  Expires: 1800  // Valid for 30 minutes
+});
+
+// Client downloads directly from S3
+// window.open(downloadUrl)
+
+// Benefits:
+// - Direct S3 upload/download (bypasses your server)
+// - No need to store AWS credentials on client
+// - Server controls expiration and permissions
+// - Reduced server bandwidth usage
+
+// Use cases:
+// - Direct file uploads from mobile app
+// - Temporary download links
+// - User-specific access control
+// - Large file transfers
+```
+
+### Q7: Explain S3 bucket policies and access control
+
+**A:** Control who can access S3 resources.
+
+```javascript
+// 1. Bucket Policy (JSON-based access control)
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Principal": { "AWS": "arn:aws:iam::123456789:user/john" },
+      "Action": "s3:GetObject",
+      "Resource": "arn:aws:s3:::my-bucket/public/*"
+    }
+  ]
+}
+
+// 2. ACLs (Access Control Lists)
+await s3.putObjectAcl({
+  Bucket: 'my-bucket',
+  Key: 'file.txt',
+  ACL: 'public-read'  // Everyone can read
+}).promise();
+
+// 3. Block Public Access (recommended)
+await s3.putPublicAccessBlockConfiguration({
+  Bucket: 'my-bucket',
+  PublicAccessBlockConfiguration: {
+    BlockPublicAcls: true,
+    BlockPublicPolicy: true,
+    IgnorePublicAcls: true,
+    RestrictPublicBuckets: true
+  }
+}).promise();
+
+// 4. Bucket encryption
+await s3.putBucketEncryption({
+  Bucket: 'my-bucket',
+  ServerSideEncryptionConfiguration: {
+    Rules: [
+      {
+        ApplyServerSideEncryptionByDefault: {
+          SSEAlgorithm: 'AES256'  // Or 'aws:kms'
+        }
+      }
+    ]
+  }
+}).promise();
+
+// 5. CORS configuration
+await s3.putBucketCors({
+  Bucket: 'my-bucket',
+  CORSConfiguration: {
+    CORSRules: [
+      {
+        AllowedMethods: ['GET', 'PUT'],
+        AllowedOrigins: ['https://example.com'],
+        AllowedHeaders: ['*'],
+        MaxAgeSeconds: 3000
+      }
+    ]
+  }
+}).promise();
+```
+
+### Q8: What is S3 Transfer Acceleration and Multipart Upload?
+
+**A:**
+
+**Transfer Acceleration:**
+```javascript
+// Enable Transfer Acceleration
+await s3.putBucketAccelerateConfiguration({
+  Bucket: 'my-bucket',
+  AccelerateConfiguration: {
+    Status: 'Enabled'
+  }
+}).promise();
+
+// Use accelerated endpoint
+const s3Accelerated = new AWS.S3({
+  endpoint: 'https://my-bucket.s3-accelerate.amazonaws.com'
+});
+
+// Use for large file uploads from clients worldwide
+// Costs $0.04 per GB transferred
+```
+
+**Multipart Upload:**
+```javascript
+// Upload large file in chunks
+const fs = require('fs');
+
+async function multipartUpload() {
+  const fileSize = fs.statSync('large-file.zip').size;
+  const partSize = 5 * 1024 * 1024; // 5MB per part
+  
+  // Initiate multipart upload
+  const multipart = await s3.createMultipartUpload({
+    Bucket: 'my-bucket',
+    Key: 'large-file.zip'
+  }).promise();
+  
+  const uploadId = multipart.UploadId;
+  const parts = [];
+  
+  // Upload each part
+  for (let i = 1; i <= Math.ceil(fileSize / partSize); i++) {
+    const start = (i - 1) * partSize;
+    const end = Math.min(start + partSize, fileSize);
+    
+    const chunk = fs.readFileSync('large-file.zip', {
+      start,
+      end: end - 1
+    });
+    
+    const part = await s3.uploadPart({
+      Bucket: 'my-bucket',
+      Key: 'large-file.zip',
+      PartNumber: i,
+      UploadId: uploadId,
+      Body: chunk
+    }).promise();
+    
+    parts.push({
+      PartNumber: i,
+      ETag: part.ETag
+    });
+  }
+  
+  // Complete multipart upload
+  const result = await s3.completeMultipartUpload({
+    Bucket: 'my-bucket',
+    Key: 'large-file.zip',
+    UploadId: uploadId,
+    MultipartUpload: { Parts: parts }
+  }).promise();
+  
+  console.log('Upload complete:', result.Location);
+}
+
+// Benefits:
+// - Resume failed uploads (retry individual parts)
+// - Upload in parallel (faster)
+// - Reduce timeout risk
+// - More reliable for large files
+```
+
+### Q9: How do you monitor and optimize S3 costs?
+
+**A:**
+
+```javascript
+// 1. Enable S3 Storage Lens (CloudWatch metrics)
+// Provides dashboard with storage analytics
+
+// 2. Use CloudWatch metrics
+const cloudwatch = new AWS.CloudWatch();
+
+const metrics = await cloudwatch.getMetricStatistics({
+  Namespace: 'AWS/S3',
+  MetricName: 'BucketSizeBytes',
+  Dimensions: [{ Name: 'BucketName', Value: 'my-bucket' }],
+  StartTime: new Date(Date.now() - 30*24*60*60*1000),
+  EndTime: new Date(),
+  Period: 86400,  // Daily
+  Statistics: ['Average']
+}).promise();
+
+// 3. S3 Inventory
+// Generate CSV reports of bucket contents
+// Helps identify old/unused files
+
+// 4. Lifecycle policies
+// Move to cheaper storage classes
+// Delete old versions/incomplete uploads
+
+// 5. Cost optimization strategies:
+// - Use Intelligent-Tiering for variable access
+// - Archive old data to Glacier
+// - Delete incomplete multipart uploads
+// - Remove unused versions
+// - Use CloudFront for frequent downloads
+
+// Example: Delete old data
+{
+  "Rules": [
+    {
+      "Filter": { "Prefix": "logs/" },
+      "Transitions": [
+        { "Days": 30, "StorageClass": "STANDARD_IA" },
+        { "Days": 90, "StorageClass": "GLACIER" }
+      ],
+      "Expiration": { "Days": 365 }
+    }
+  ]
+}
+
+// Cost impact:
+// S3 Standard: $0.023/GB
+// S3 Standard-IA: $0.0125/GB (70% cheaper)
+// S3 Glacier: $0.004/GB (85% cheaper)
+```
+
+---
+
+### Q4: What is EC2 and how does it differ from Lambda?
+
+**A:**
+
+| Feature | EC2 | Lambda |
+|---------|-----|--------|
+| **Cost Model** | Pay for uptime | Pay per invocation |
+| **Time Limit** | No limit | 15 minutes max |
+| **Scaling** | Manual | Automatic |
+| **Server Management** | Full control | No management |
+| **Best For** | Long-running apps | Event-driven tasks |
+
+### Q5: What is AWS RDS and its benefits?
+
+**A:** RDS is managed database service for MySQL, PostgreSQL, MariaDB, Oracle, SQL Server.
+
+**Benefits:**
+- Automated backups and point-in-time restore
+- Multi-AZ for high availability
+- Read replicas for scaling reads
+- Automatic patching
+
+### Q6: Explain SQS and its use cases
+
+**A:** SQS is fully managed message queue for decoupling components.
+
+**Types:**
+- **Standard Queue:** Best effort, may have duplicates
+- **FIFO Queue:** Exactly-once, ordered
+
+**Use Cases:** Async job processing, background tasks, rate limiting
+
+---
+
+## 8. System Design & Architecture
+
+### Q1: What are microservices and monolithic architecture?
+
+**A:**
+
+| Feature | Monolithic | Microservices |
+|---------|-----------|---|
+| **Structure** | Single codebase | Multiple services |
+| **Database** | Shared | Each service owns data |
+| **Coupling** | Tightly coupled | Loosely coupled |
+| **Scaling** | Scale entire app | Scale individual services |
+| **Deployment** | Single deployment | Independent deployment |
+| **Complexity** | Initial simplicity | More complex |
+
+### Q2: What is API Gateway and why is it needed?
+
+**A:** API Gateway is intermediary between clients and backend services.
+
+**Functions:**
+- Request routing to services
+- Rate limiting and throttling
+- Authentication/authorization
+- Load balancing
+- Request/response transformation
+- API versioning
+
+### Q3: Explain load balancing and different strategies
+
+**A:** Load balancing distributes requests across servers.
+
+**Strategies:**
+
+```javascript
+// Round Robin
+server1, server2, server3, server1, server2, server3...
+
+// Least Connections
+Route to server with fewest active connections
+
+// IP Hash
+hash(clientIP) % numServers
+(Ensures same client → same server)
+
+// Weighted Round Robin
+server1 (weight: 5), server2 (weight: 3)
+```
+
+### Q4: What is caching and caching strategies?
+
+**A:**
+
+```javascript
+// Cache-Aside (Lazy Loading)
+const getUser = async (id) => {
+  const cached = await redis.get(`user:${id}`);
+  if (cached) return JSON.parse(cached);
+  
+  const user = await db.users.findById(id);
+  await redis.set(`user:${id}`, JSON.stringify(user), 'EX', 3600);
+  return user;
+};
+
+// Write-Through
+const createUser = async (userData) => {
+  const user = await db.users.create(userData);
+  await redis.set(`user:${user.id}`, JSON.stringify(user));
+  return user;
+};
+
+// Write-Behind
+const updateUser = async (id, data) => {
+  await redis.set(`user:${id}`, JSON.stringify(data));
+  // Asynchronously write to database
+  db.users.update(id, data).catch(console.error);
+};
+```
+
+### Q5: What is horizontal and vertical scaling?
+
+**A:**
+
+**Horizontal Scaling (Scale Out):**
+- Add more servers/instances
+- Better for distributed systems
+- No single point of failure
+- More complex
+
+**Vertical Scaling (Scale Up):**
+- Increase resources of existing server
+- Simpler to implement
+- Has physical limits
+- Causes downtime
+
+### Q6: What is eventual consistency and ACID compliance?
+
+**A:**
+
+**ACID (Atomicity, Consistency, Isolation, Durability):**
+- Ensures data integrity
+- Used in SQL databases
+- Immediate consistency
+
+**Eventual Consistency:**
+- Distributed systems eventually sync
+- Used in NoSQL databases
+- Trade-off for availability
+
+---
+
+## 9. Performance & Optimization
+
+### Q1: How do you identify and resolve performance bottlenecks?
+
+**A:**
+
+```javascript
+// Profiling with Node.js
+node --prof app.js
+node --prof-process isolate-*.log > profile.txt
+
+// Monitoring response times
+const startTime = Date.now();
+const result = await slowOperation();
+console.log(`Duration: ${Date.now() - startTime}ms`);
+
+// Database monitoring
+db.collection.explain('executionStats').find(query);
+```
+
+**Techniques:**
+- Profiling: Use clinic.js, Node profiler
+- Monitoring: Track response times, CPU, memory
+- Database: Add indexes, optimize queries
+- Caching: Reduce database hits
+
+### Q2: What is N+1 query problem and how to solve it?
+
+**A:**
+
+```javascript
+// ❌ N+1 Query Problem
+const posts = await Post.find();
+for (let post of posts) {
+  post.author = await User.findById(post.authorId); // N+1 queries
+}
+
+// ✅ Solution 1: JOIN query
+const posts = await Post.find().populate('author');
+
+// ✅ Solution 2: Batch load
+const posts = await Post.find();
+const authorIds = posts.map(p => p.authorId);
+const authors = await User.find({ _id: { $in: authorIds } });
+const authorMap = new Map(authors.map(a => [a._id, a]));
+posts.forEach(p => p.author = authorMap.get(p.authorId));
+```
+
+### Q3: How do you optimize database queries?
+
+**A:**
+
+```javascript
+// ✅ Create indexes
+db.users.createIndex({ email: 1 });
+db.posts.createIndex({ authorId: 1, createdAt: -1 });
+
+// ✅ Use EXPLAIN
+db.users.find({ email: 'john@example.com' }).explain('executionStats');
+
+// ✅ Select needed columns
+db.users.find({}, { _id: 1, email: 1 }); // Not SELECT *
+
+// ✅ Use pagination
+db.posts.find().skip(100).limit(20);
+
+// ✅ Denormalization for reads
+// Store author name in post document instead of JOINing
+```
+
+### Q4: What is connection pooling and its benefits?
+
+**A:**
+
+```javascript
+// Mongoose handles pooling automatically
+mongoose.connect('mongodb://localhost', {
+  maxPoolSize: 10,  // Max connections
+  minPoolSize: 2    // Min connections
+});
+
+// Node.js with MySQL
+const pool = mysql.createPool({
+  connectionLimit: 10,
+  host: 'localhost',
+  user: 'root',
+  password: 'password',
+  database: 'mydb'
+});
+```
+
+### Q5: How do you implement rate limiting?
+
+**A:**
+
+```javascript
+const rateLimit = require('express-rate-limit');
+
+// Token Bucket approach
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // Max 100 requests per windowMs
+  message: 'Too many requests, please try again later'
+});
+
+app.use('/api/', limiter);
+
+// Redis-based rate limiting for distributed systems
+const RedisStore = require('rate-limit-redis');
+const redis = require('redis');
+const client = redis.createClient();
+
+const limiter = rateLimit({
+  store: new RedisStore({
+    client: client,
+    prefix: 'rl:' // Rate limit prefix
+  }),
+  windowMs: 15 * 60 * 1000,
+  max: 100
+});
+```
+
+---
+
+## 10. Testing & Code Quality
+
+### Q1: What are different types of testing?
+
+**A:**
+
+| Type | Scope | Tools |
+|------|-------|-------|
+| **Unit** | Individual functions | Jest, Mocha |
+| **Integration** | Multiple components | Jest, Mocha, Supertest |
+| **E2E** | Complete workflows | Cypress, Playwright |
+| **Performance** | System under load | Apache JMeter, Artillery |
+| **Security** | Vulnerabilities | OWASP, Snyk |
+
+### Q2: What testing frameworks and tools do you know?
+
+**A:**
+
+```javascript
+// Jest - Full featured test runner
+describe('User Service', () => {
+  test('should create user', async () => {
+    const user = await userService.create({ name: 'John' });
+    expect(user.name).toBe('John');
+  });
+});
+
+// Supertest - HTTP assertions for APIs
+const request = require('supertest');
+
+describe('User API', () => {
+  it('GET /users should return all users', async () => {
+    const res = await request(app).get('/users');
+    expect(res.status).toBe(200);
+    expect(res.body).toBeInstanceOf(Array);
+  });
+});
+
+// Mocha + Chai
+const { expect } = require('chai');
+
+describe('User', () => {
+  it('should be valid', () => {
+    const user = new User({ name: 'John' });
+    expect(user.name).to.equal('John');
+  });
+});
+```
+
+### Q3: What is test-driven development (TDD)?
+
+**A:** Write test → Write code to pass test → Refactor
+
+```javascript
+// Test first (RED)
+describe('add', () => {
+  it('should return sum of two numbers', () => {
+    expect(add(2, 3)).to.equal(5);
+  });
+});
+
+// Write code (GREEN)
+function add(a, b) {
+  return a + b;
+}
+
+// Refactor (REFACTOR)
+const add = (a, b) => a + b;
+```
+
+### Q4: What is code coverage?
+
+**A:** Code coverage measures percentage of code executed by tests.
+
+```bash
+# Generate coverage report
+npm test -- --coverage
+
+# Output:
+# File                  Stmts   Branch   Funcs   Lines
+# ─────────────────────────────────────────────────
+# All files              85%      80%     90%     85%
+```
+
+**Types:**
+- Statement coverage
+- Branch coverage
+- Function coverage
+- Line coverage
+
+---
+
+## 11. Deployment & DevOps
+
+### Q1: What is Docker and why is it useful?
+
+**A:** Docker packages application and dependencies into isolated containers.
+
+```dockerfile
+FROM node:16-alpine
+
+WORKDIR /app
+
+COPY package*.json ./
+RUN npm install --production
+
+COPY . .
+
+EXPOSE 3000
+
+CMD ["node", "server.js"]
+```
+
+**Benefits:**
+- Consistency across environments
+- Easy deployment and scaling
+- Isolation prevents conflicts
+
+### Q2: What is Kubernetes and its advantages?
+
+**A:** Kubernetes orchestrates container deployment, scaling, and networking.
+
+**Key Features:**
+- Auto-scaling based on metrics
+- Self-healing (restarts failed containers)
+- Load balancing
+- Rolling updates
+
+### Q3: What is CI/CD and its importance?
+
+**A:**
+
+```yaml
+# GitHub Actions CI/CD
+name: Backend CI/CD
+
+on: [push, pull_request]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install dependencies
+        run: npm install
+      - name: Run tests
+        run: npm test
+      - name: Deploy
+        run: npm run deploy
+```
+
+**CI:** Automatically test on every commit  
+**CD:** Automatically deploy after tests pass
+
+### Q4: What is logging and monitoring?
+
+**A:**
+
+```javascript
+// Winston logging
+const winston = require('winston');
+
+const logger = winston.createLogger({
+  level: 'info',
+  format: winston.format.json(),
+  transports: [
+    new winston.transports.File({ filename: 'error.log', level: 'error' }),
+    new winston.transports.File({ filename: 'combined.log' })
+  ]
+});
+
+logger.info('User created', { userId: 123 });
+logger.error('Database error', error);
+```
+
+**Monitoring Tools:** Prometheus, Grafana, New Relic, DataDog
+
+### Q5: What is environment configuration management?
+
+**A:**
+
+```javascript
+// .env file
+DATABASE_URL=mongodb://localhost:27017
+JWT_SECRET=your_secret_key
+NODE_ENV=development
+
+// Load environment variables
+require('dotenv').config();
+
+// Use in code
+const dbUrl = process.env.DATABASE_URL;
+const secret = process.env.JWT_SECRET;
+```
+
+**Best Practices:**
+- Never commit `.env` to version control
+- Use different secrets for different environments
+- Rotate secrets regularly
+- Use environment variable management tools
+
+### Q6: What is zero-downtime deployment?
+
+**A:** Deploying new code without interrupting service.
+
+```javascript
+// Blue-Green Deployment
+// Blue: Current production
+// Green: New deployment
+// Switch traffic after green is healthy
+
+// Rolling Updates (Kubernetes)
+kubectl set image deployment/api api=myapp:v2 --record
+# Gradually replace old pods with new ones
+
+// Canary Deployment
+// Route 5% traffic to new version
+// 95% to stable version
+// Gradually increase if no errors
+```
+
+---
+
+## 🎯 Interview Preparation Tips
+
+1. **Practice Coding**
+   - Build small projects using your tech stack
+   - Write actual code, not just theory
+   - Use real databases and APIs
+
+2. **Understand Trade-offs**
+   - Most questions have multiple valid approaches
+   - Discuss pros and cons of each approach
+   - Consider scalability and maintainability
+
+3. **System Design Focus**
+   - With 2 years experience, focus on system design
+   - Practice designing scalable systems
+   - Discuss trade-offs (consistency vs availability)
+
+4. **Real-world Examples**
+   - Prepare examples from your projects
+   - Discuss challenges faced
+   - Explain solutions implemented
+
+5. **Clarify Requirements**
+   - Always clarify requirements before solutions
+   - Ask about scale, traffic, latency requirements
+   - Understand constraints and assumptions
+
+6. **Error Handling & Edge Cases**
+   - Always discuss error handling
+   - Consider edge cases
+   - Discuss failure scenarios
+
+7. **Keep Learning**
+   - Stay updated with latest practices
+   - Learn new tools and frameworks
+   - Follow tech blogs and communities
+
+8. **Practice Explaining**
+   - Explain complex concepts simply
+   - Use diagrams and examples
+   - Listen actively to interviewer feedback
+
+---
+
+## 📚 Additional Resources
+
+### Documentation
+- [Node.js Official Docs](https://nodejs.org/docs/)
+- [Express.js Guide](https://expressjs.com/)
+- [MongoDB Documentation](https://docs.mongodb.com/)
+- [AWS Documentation](https://docs.aws.amazon.com/)
+
+### Learning Resources
+- High-quality YouTube channels on Node.js
+- System Design courses on Udemy
+- LeetCode for data structures and algorithms
+
+### Practice
+- Build projects (todo app, social media, e-commerce)
+- Contribute to open-source projects
+- Participate in coding challenges
+
+---
+
+**Good luck with your backend interviews! 🚀**
+
+*Last updated: January 2024*
