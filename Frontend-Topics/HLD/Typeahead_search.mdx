@@ -1,0 +1,270 @@
+---
+title: "Frontend HLD — Typeahead / Autocomplete Search"
+topic: "Search-as-you-type component design"
+tags: [frontend, hld, system-design, react, performance]
+---
+
+# 1: Design a Typeahead / Autocomplete Search Component
+
+> Example: Google search bar, Amazon search suggestions.
+
+## 1. Clarify Requirements
+
+### Functional
+- User types in a search box, sees a dropdown of relevant suggestions as they type
+- Suggestions update in near real-time
+- User can select a suggestion via mouse click or keyboard (arrow keys + enter)
+- Support highlighting the matched substring in results
+- Show recent searches when input is empty/focused
+
+### Non-functional
+- Low latency — suggestions should feel instant (**&lt;100–300ms** perceived)
+- Should work smoothly on mobile (touch) and desktop (keyboard)
+- Should not overwhelm the backend with a request per keystroke
+- Should degrade gracefully on slow/flaky networks
+
+### Scope statement (say this out loud)
+> "I'll focus on the core search-as-you-type flow, request optimization, and race condition handling. I'll assume the ranking algorithm itself is a backend concern, and I'll skip multi-language/IME input handling unless asked."
+
+---
+
+## 2. API Contract
+
+```
+GET /api/suggest?q={query}&limit=10
+
+Response:
+{
+  "query": "iph",
+  "suggestions": [
+    { "id": "123", "text": "iphone 15", "category": "electronics" },
+    { "id": "124", "text": "iphone case", "category": "accessories" }
+  ]
+}
+```
+
+- REST is fine here (simple, cacheable via query string, works well with CDN/browser cache)
+- Consider a separate lightweight endpoint from full search — optimized purely for speed (often backed by a trie or in-memory index, not the full search index)
+
+---
+
+## 3. Component Architecture
+
+```
+<SearchBox>
+  <Input />
+  <SuggestionsDropdown>
+    <SuggestionItem />  (repeated)
+  </SuggestionsDropdown>
+</SearchBox>
+```
+
+| Component | Type | Responsibility |
+|---|---|---|
+| `SearchBox` | Container | Owns state, orchestrates fetching, keyboard handling |
+| `Input` | Presentational | Controlled input, emits onChange/onKeyDown |
+| `SuggestionsDropdown` | Presentational | Renders list, hover/highlight styling |
+| `SuggestionItem` | Presentational | Bolds matched substring, handles click |
+
+> Keep dropdown as a separate component so you can lazy-render it (don't mount until first needed) and reuse it elsewhere (e.g., recent searches).
+
+---
+
+## 4. Data & State Management
+
+```ts
+type SearchBoxState = {
+  inputValue: string;
+  suggestions: Suggestion[];
+  activeIndex: number;   // for keyboard nav highlight
+  isLoading: boolean;
+  isOpen: boolean;
+};
+```
+
+- Local/component state — no need for Redux/global store unless suggestions must be shared across components
+- Cache: in-memory `Map<query, suggestions[]>` (or React Query / SWR for caching, dedup, stale-while-revalidate) — avoids re-fetching for a query the user already typed
+
+---
+
+## 5. Performance (core of this question)
+
+This is where most interview signal comes from.
+
+### a) Debounce input
+Wait ~200–300ms after the user stops typing before firing a request.
+
+```js
+const debouncedFetch = useMemo(() => debounce(fetchSuggestions, 250), []);
+```
+
+**Trade-off:** debounce delays the first result. Throttle fires periodically during continuous typing (feels more "live" but sends more requests). Debounce is generally preferred for typeahead.
+
+### b) Race condition handling (interviewers probe this heavily)
+
+**Problem:** user types "a", then "ap" quickly. The "a" request is slow and resolves *after* "ap" — overwriting correct results with stale ones.
+
+Mention 2–3 solutions:
+- **Request ID / token**: increment a counter each keystroke, only apply the response if its ID matches the latest request ID
+- **AbortController**: cancel the previous fetch when a new one starts
+- **Compare against current input**: discard response if `response.query !== currentInputValue`
+
+```js
+const latestQuery = useRef('');
+
+async function fetchSuggestions(query) {
+  latestQuery.current = query;
+  const res = await fetch(`/api/suggest?q=${query}`);
+  const data = await res.json();
+  if (query === latestQuery.current) {
+    setSuggestions(data.suggestions);
+  }
+}
+```
+
+### c) Caching
+- Client-side cache (Map / React Query) keyed by query string
+- Prefix-based cache reuse: if "iphone" is cached and user types "iphon", filter the cached superset client-side instead of firing a new request (only valid if backend guarantees prefix-consistent results)
+
+### d) Minimum character threshold
+Don't fire requests for 1-character queries. Usually wait for 2–3 chars.
+
+### e) Request cancellation
+Cancel in-flight requests when a newer one starts (AbortController) — saves bandwidth, avoids wasted backend work.
+
+### f) Prefetching / predictive
+Prefetch popular suggestions on page load or input focus — reduces perceived latency for the first keystroke.
+
+---
+
+## 6. Edge Cases
+
+- Empty input → show recent/trending searches, not a blank dropdown
+- No results found → show "no results" state
+- API error/timeout → show cached results if available, else a subtle error state
+- User clicks outside dropdown → close it
+- Very fast typing → covered by debounce + race-condition handling
+- Special characters / XSS in query → sanitize before rendering (especially if bolding matches via `dangerouslySetInnerHTML`)
+
+---
+
+## 7. Accessibility
+
+- `role="combobox"` on input, `role="listbox"` on dropdown, `role="option"` on each item
+- `aria-activedescendant` to announce the currently highlighted item to screen readers
+- Full keyboard support: Arrow Up/Down to navigate, Enter to select, Escape to close
+- Focus stays in the input while navigating with arrows (don't shift DOM focus to list items)
+
+---
+
+## 8. Security
+
+- Sanitize the query before rendering highlighted matches (prevent XSS)
+- Rate-limiting is a backend concern — mention it briefly
+
+---
+
+## 9. Testing
+
+| Level | What to test |
+|---|---|
+| Unit | Debounce logic, race-condition resolution, keyboard nav (index wrapping, selection) |
+| Integration | Typing triggers correct API calls, correct suggestion rendering |
+| E2E | Full flow — type, see suggestions, select via keyboard and click |
+
+---
+
+## 10. Trade-offs to State Explicitly
+
+- **Debounce vs throttle**: debounce chosen for fewer wasted requests, accepting slightly higher latency on the first suggestion
+- **Client cache vs always-fresh**: cache improves perceived speed but risks slightly stale suggestions — acceptable since typeahead data isn't highly volatile
+- **REST vs WebSocket**: REST is simpler and cacheable; WebSocket only worth it for live-updating suggestions (e.g., stock ticker) — not needed here
+
+---
+
+## Likely Follow-up Questions (with Answers)
+
+### Q1: How would this change if suggestions needed to work offline?
+
+**Approach:**
+- **Local cache as source of truth when offline**: keep the existing `Map<query, suggestions[]>` client cache, but persist it to `IndexedDB` (not just in-memory) so it survives page reloads and is queryable even with no network.
+- **Detect offline state**: use `navigator.onLine` + `online`/`offline` event listeners. When offline, skip the network call entirely and serve from IndexedDB.
+- **Preload a "core" dataset**: for high-value use cases (e.g., a shopping app), ship a small curated trie/list of top N popular queries in a service worker cache or bundled JSON, so offline suggestions aren't empty even for queries never typed before.
+- **Prefix matching client-side**: since you can't hit the backend, implement a lightweight client-side prefix search (trie or simple `.filter(s => s.startsWith(query))`) over the cached/preloaded dataset.
+- **Service Worker**: register a service worker to intercept `/api/suggest` requests — serve cached responses (stale-while-revalidate) when offline, and sync fresh data when connectivity returns.
+- **UX signal**: show a subtle indicator ("showing offline results") so the user knows suggestions may be limited/stale — don't silently pretend it's live.
+
+**Trade-off to mention:** IndexedDB/service-worker adds complexity and storage management (cache eviction, versioning) — only justify this if offline support is a real product requirement, not by default.
+
+---
+
+### Q2: How would you scale this to 100k requests/sec?
+
+This is mostly a backend/infra question, but you should show you understand the frontend's role in reducing load:
+
+**Frontend-side load reduction (what you control):**
+- Debounce + minimum character threshold aggressively reduce request volume already — quantify it if asked (e.g., debounce alone can cut requests by 70-80% for average typing speed)
+- Client-side caching avoids repeat requests for the same query across users' sessions (if using something like a shared CDN cache) and within a session
+- Prefix-based client filtering (see Q1) avoids a new request when a cached broader result set already covers the new, more specific query
+
+**Backend/infra (mention briefly, don't over-invest since it's not the FE focus):**
+- **CDN edge caching**: `/api/suggest?q=iphone` is a GET with a cacheable query string — cache at CDN edge (e.g., Cloudflare/Akamai) with short TTL (e.g., 60s), since popular queries repeat massively across users (power-law distribution — "iphone" gets hit far more than obscure queries)
+- **Read replicas / in-memory index**: suggestions are typically served from an in-memory trie or Elasticsearch-style index, horizontally sharded, separate from the primary search/write path
+- **Rate limiting per client**: prevent abusive clients from monopolizing capacity
+- **Load balancing** across suggestion-service instances
+
+**Key interview point:** explicitly say "the frontend's job is to minimize unnecessary requests through debounce, caching, and thresholds — the actual 100k/sec handling is a backend scaling concern (caching layers, sharding, CDN), but the frontend can meaningfully cut the load before it ever hits the backend."
+
+---
+
+### Q3: How would you handle typo tolerance / fuzzy matching?
+
+**Where it belongs:** primarily backend (this is mostly an algorithms/data-structure question — e.g., Levenshtein distance, BK-trees, or n-gram indexing in Elasticsearch), but you should know how it affects frontend behavior:
+
+**Backend techniques (mention briefly to show awareness):**
+- Edit-distance matching (Levenshtein) with a small threshold (e.g., distance ≤ 2) so "iphon" still matches "iphone"
+- N-gram/trigram indexing so partial/misspelled substrings still match
+- Phonetic algorithms (Soundex/Metaphone) for "sounds-like" matches
+
+**Frontend implications you should call out:**
+- The API contract might return a `corrected_query` field so the UI can show "Showing results for **iphone** instead of iphon" (like Google's "did you mean")
+- Highlighting logic gets more complex: if the match is fuzzy, you can't just do a simple substring search to bold the match — you may need the backend to return match offsets/ranges per suggestion rather than computing them client-side
+- Consider showing both: the literal top exact matches plus a secondary "did you mean" fuzzy suggestion, so you don't fully hide exact results in favor of fuzzy ones
+
+**Trade-off:** fuzzy matching increases backend latency/compute — weigh it against showing "no results" for a simple typo. Usually worth it for typeahead since typos are common while typing fast.
+
+---
+
+### Q4: How would you support multi-language / IME input?
+
+This is a good one to show frontend depth on, since it's genuinely a frontend-heavy concern (unlike Q2/Q3).
+
+**The core problem:** For languages like Chinese, Japanese, Korean (CJK), users type using an **IME (Input Method Editor)** — e.g., typing "nihao" and the IME converts it to "你好" through an intermediate composition state. If you fire search requests on every `onChange` during this composition, you'll fire garbage requests on incomplete/intermediate characters.
+
+**Solution — use composition events:**
+```js
+let isComposing = false;
+
+<input
+  onCompositionStart={() => { isComposing = true; }}
+  onCompositionEnd={(e) => {
+    isComposing = false;
+    handleSearch(e.target.value); // fire only now
+  }}
+  onChange={(e) => {
+    if (!isComposing) {
+      handleSearch(e.target.value);
+    }
+  }}
+/>
+```
+- `compositionstart` fires when the user begins using an IME
+- `compositionend` fires when the character is finalized
+- Suppress your debounce/fetch logic while `isComposing` is true, and only trigger the search once composition ends
+
+**Other considerations:**
+- **RTL languages** (Arabic, Hebrew): ensure the dropdown, text alignment, and highlight-matching logic respect `dir="rtl"` — don't hardcode left-alignment
+- **Locale-aware string matching**: substring highlighting should use locale-aware comparison (e.g., `Intl.Collator` or normalization like `NFC`/`NFD`) since naive `.indexOf()` can miss matches with accented characters (e.g., "café" vs "cafe")
+- **Backend**: the suggestion index needs language-aware tokenization (CJK doesn't have whitespace word boundaries, so it needs a different tokenizer than English)
+
+**Key interview point:** the composition-event handling is the single most important detail here — many candidates miss it entirely and just say "add i18n support," which signals shallow understanding. Naming `compositionstart`/`compositionend` explicitly is a strong signal of real-world experience.
