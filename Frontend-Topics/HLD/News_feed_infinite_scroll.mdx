@@ -1,0 +1,241 @@
+---
+title: "Frontend HLD — News Feed / Infinite Scroll"
+day: 2
+topic: "Unbounded list rendering, virtualization, and live content insertion"
+tags: [frontend, hld, system-design, react, performance, virtualization]
+---
+
+# Day 2: Design a News Feed / Infinite Scroll Component
+
+> Example: Twitter/X, Facebook, or LinkedIn's home feed.
+
+## 1. Clarify Requirements
+
+### Functional
+- User sees a continuously scrolling feed of posts (text, image, video, ads mixed in)
+- New posts load automatically as user scrolls near the bottom
+- New posts published by others appear at the top **without disrupting scroll position** (e.g., "🔼 12 new posts" banner instead of auto-inserting)
+- User can like/comment/share inline without losing scroll position
+- Returning to the feed (back navigation) restores scroll position, not a full refetch
+
+### Non-functional
+- Must handle thousands of items without degrading scroll performance (60fps)
+- Should work well on low-end mobile devices (memory constrained)
+- Should minimize data usage (don't over-fetch)
+- Should feel "live" without being disruptive
+
+### Scope statement (say this out loud)
+> "I'll focus on efficient infinite scroll rendering, DOM/memory management via virtualization, and the top-insertion problem for new content. I'll treat the ranking algorithm and video autoplay logic as out of scope unless asked."
+
+---
+
+## 2. API Contract
+
+```
+GET /api/feed?cursor={cursor}&limit=20
+
+Response:
+{
+  "items": [
+    { "id": "p1", "type": "text", "content": "...", "author": {...}, "createdAt": "..." },
+    { "id": "p2", "type": "image", "imageUrl": "...", "author": {...} },
+    { "id": "p3", "type": "ad", "adCreative": {...} }
+  ],
+  "nextCursor": "eyJvZmZzZXQiOjIwfQ==",
+  "hasNewerCount": 5
+}
+```
+
+- **Cursor-based pagination**, not offset-based — offset breaks when new items are inserted at the top mid-session (item at "offset 20" shifts as new posts arrive, causing duplicates/skips)
+- Separate lightweight endpoint or WebSocket/polling to check `hasNewerCount` — don't refetch the whole feed just to check for new posts
+
+---
+
+## 3. Component Architecture
+
+```
+<FeedContainer>
+  <NewPostsBanner />          // "12 new posts" - click to prepend
+  <VirtualizedList>
+    <FeedItem type="text" />
+    <FeedItem type="image" />
+    <FeedItem type="video" />
+    <FeedItem type="ad" />
+  </VirtualizedList>
+  <LoadMoreSentinel />        // triggers next page fetch
+</FeedContainer>
+```
+
+| Component | Responsibility |
+|---|---|
+| `FeedContainer` | Owns state, orchestrates fetching, scroll restoration |
+| `VirtualizedList` | Renders only visible items + buffer (core performance piece) |
+| `FeedItem` | Polymorphic — renders sub-component based on `type` via a type-to-component map |
+| `LoadMoreSentinel` | Invisible element observed via IntersectionObserver to trigger pagination |
+
+```js
+const FEED_ITEM_COMPONENTS = {
+  text: TextPost,
+  image: ImagePost,
+  video: VideoPost,
+  ad: AdPost,
+};
+```
+
+---
+
+## 4. Data & State Management
+
+```ts
+type FeedState = {
+  items: FeedItem[];
+  nextCursor: string | null;
+  isLoadingMore: boolean;
+  newItemsAvailable: number;
+  scrollPosition: number;
+};
+```
+
+- Local/feature state is fine; if feed data needs to be shared across routes (e.g., post detail → back), lift it to a store or use React Query/SWR with a shared cache key so re-entering the feed doesn't refetch
+- **Normalize post data** if posts reference nested entities (author, comments) that also appear elsewhere — store posts and authors separately, reference by ID, to avoid duplication and stale-copy bugs
+
+---
+
+## 5. Performance (core of this question)
+
+### a) Virtualization (windowing) — the single most important technique
+
+Rendering thousands of DOM nodes kills scroll performance and memory.
+
+- Only render items currently in viewport + a small buffer above/below (e.g., 3-5 items)
+- Recycle DOM nodes as user scrolls rather than growing the DOM indefinitely
+- Maintain a lightweight position map (item height cache) since feed items have **variable heights** (text vs image vs video) — trickier than fixed-height virtualization, worth calling out explicitly
+
+```js
+// Conceptual: variable-size virtualizer needs to measure and cache heights
+const rowHeightCache = useRef(new Map());
+// after render, measure actual height via ResizeObserver, update cache,
+// recalculate offsets for items below
+```
+
+### b) Infinite scroll trigger — IntersectionObserver over scroll listeners
+
+```js
+const observer = new IntersectionObserver((entries) => {
+  if (entries[0].isIntersecting && !isLoadingMore) {
+    fetchNextPage();
+  }
+}, { rootMargin: '400px' }); // trigger before user hits the actual bottom
+observer.observe(sentinelRef.current);
+```
+
+- `IntersectionObserver` is far more performant than `onScroll` + manual `getBoundingClientRect()` calculations, which run on every scroll tick and cause jank
+- `rootMargin: '400px'` pre-fetches before the user hits the literal bottom, so there's no visible loading gap
+
+### c) New-posts-at-top problem
+
+Never auto-insert new posts above the user's current view — it shifts scroll position and disorients them.
+
+- Poll or use WebSocket to detect new posts exist (`hasNewerCount`)
+- Show a non-intrusive banner: "🔼 12 new posts" pinned at top
+- Only prepend to the DOM when the user clicks the banner — then restore scroll position by measuring the height of newly inserted content and adjusting `scrollTop`
+
+```js
+const prevScrollHeight = containerRef.current.scrollHeight;
+prependNewItems();
+// after DOM update:
+const newScrollHeight = containerRef.current.scrollHeight;
+containerRef.current.scrollTop += (newScrollHeight - prevScrollHeight);
+```
+
+### d) Image/video lazy loading
+
+- Images: `loading="lazy"` natively, or IntersectionObserver-based lazy loading with a low-res placeholder/blurhash while loading
+- Video: don't autoplay/preload video sources until in viewport — trigger `video.play()` only when visible, pause when scrolled out (also matters for battery/data on mobile)
+
+### e) Scroll restoration on back-navigation
+
+- Cache feed state (items + scroll position) when navigating away (route-level cache or `sessionStorage`)
+- On return, restore from cache instead of refetching — re-hydrate the virtualized list at the saved scroll offset
+
+### f) Prefetching
+
+Prefetch the next page slightly before the user reaches the sentinel (the `rootMargin: '400px'` trick achieves this) so there's no visible spinner during normal scroll speed.
+
+---
+
+## 6. Edge Cases
+
+- Empty feed (new user, no follows yet) → empty state with suggestions, not a blank screen
+- End of feed reached → "You're all caught up" rather than an infinite spinner
+- Duplicate items (can happen with cursor pagination if items shift between requests) → dedupe by ID before rendering
+- Fetch failure mid-scroll → retry affordance inline at the bottom, don't break the whole feed
+- Very fast scrolling ("scroll flinging") → debounce/throttle the fetch trigger so you don't fire redundant page requests
+- Ad injection → ads interspersed at fixed intervals (e.g., every 5th item) — keep this logic in the data-shaping layer, not scattered through rendering logic
+
+---
+
+## 7. Accessibility
+
+- Semantic list structure: `role="feed"` on container, `role="article"` on each item — ARIA has an explicit `feed` pattern for this exact use case
+- Announce new content via `aria-live="polite"` region when items load, without being disruptive
+- Ensure virtualization doesn't break screen reader navigation — some libraries strip out-of-view items from the DOM entirely, which can confuse landmark/heading navigation; consider `aria-setsize`/`aria-posinset` to communicate position within the total feed
+- Keyboard: ensure focus isn't lost when virtualized items unmount/remount as they scroll out and back into the render window
+
+---
+
+## 8. Security
+
+- Sanitize user-generated post content (text posts likely support rich text/links) before rendering — XSS risk
+- Validate/sanitize image and video URLs before rendering to avoid malicious redirects or embedded scripts via crafted media URLs
+- Rate-limit client-side actions (like/comment) to avoid spam-clicking hitting the backend excessively
+
+---
+
+## 9. Testing
+
+| Level | What to test |
+|---|---|
+| Unit | Virtualization math (offset calculation for variable heights), dedupe logic, scroll-position adjustment math |
+| Integration | Pagination triggers correctly near viewport bottom, new-posts banner behavior, type-based rendering (text/image/video/ad) |
+| E2E | Scroll through feed, verify no jank/crash at scale, back-navigation restores position, new posts don't disrupt current view |
+
+---
+
+## 10. Trade-offs to State Explicitly
+
+- **Virtualization complexity vs simplicity**: variable-height virtualization is significantly more complex than fixed-height — justify it because feed items genuinely vary in height
+- **Auto-insert vs banner-prompt for new posts**: auto-inserting feels "more live" but disorients users mid-read; banner-prompt is the industry-standard choice (Twitter/Facebook both do this) because it respects user context
+- **Cursor vs offset pagination**: cursor is more resilient to a constantly-mutating list (offset breaks on this) at the cost of slightly more complex backend query logic
+- **WebSocket vs polling for new-post detection**: WebSocket is more real-time/efficient at scale but adds infra complexity; polling every 30-60s is simpler and often "good enough" for a non-chat feed
+
+---
+
+## Likely Follow-up Questions (with Answers)
+
+### Q1: How would you handle a feed with mixed content types that have wildly different render costs (e.g., a video post is much more expensive to mount than a text post)?
+
+- Use a **polymorphic component map** (shown above) so each type owns its own render/mount logic and lifecycle, keeping `FeedItem` a thin dispatcher rather than a bloated conditional component
+- For expensive types (video), **defer actual media loading until the item is in/near viewport** via IntersectionObserver — render a lightweight placeholder (thumbnail + play icon) immediately, and only mount the real `<video>` element with sources when visible
+- In virtualization, account for the fact that a mounted video item consumes more memory — use a **smaller render buffer** (fewer off-screen items pre-rendered) for video-heavy feeds vs a text-only feed, to control memory ceiling on low-end devices
+- Unmount/pause video aggressively once scrolled out of view — don't just visually hide it, actually release decoder resources (`video.pause(); video.removeAttribute('src'); video.load();`), since browsers cap concurrent video decoders and leaving many paused-but-loaded videos in the DOM can crash mobile Safari especially
+
+### Q2: How would you prevent the "new posts" banner from becoming annoying if content is created very frequently (e.g., a live event with thousands of posts/minute)?
+
+- **Batch and throttle the count update**: instead of updating "1 new post... 2 new posts... 3 new posts" on every WebSocket message, batch updates client-side (e.g., update the banner count at most once every 3-5 seconds) to avoid a flickering/distracting UI
+- **Cap the displayed count**: show "99+ new posts" instead of an exact large number — exact counts stop being useful past a point and just create anxiety/FOMO pressure
+- **Consider a different UX for high-velocity content**: for a live event, an opt-in "Live" auto-updating mode might make more sense than the standard banner pattern — worth calling out as a question back to the interviewer/PM rather than assuming
+
+### Q3: How would you handle the case where a user is looking at a post that gets deleted (by the author or via moderation) while it's on screen?
+
+- If using WebSocket for real-time updates, the server can push a `post_deleted` event with the post ID
+- On receiving it, don't yank the post out of the DOM instantly (jarring) — replace its content with a "This post was removed" placeholder in-place, preserving layout/height so surrounding items don't jump
+- If not using WebSocket (polling-based), handle it reactively: if a like/comment action on that post returns a 404, treat that as a deletion signal and apply the same in-place placeholder swap
+- For moderation-driven removal specifically, consider fading/collapsing the item after a few seconds rather than leaving the placeholder indefinitely, to keep feed density reasonable
+
+### Q4: How would this differ if you needed to support a "jump to bottom" or "jump to specific post" deep-link feature (e.g., a permalink to a post buried 500 items deep)?
+
+- Naive infinite scroll from the top breaks this — you can't scroll-load 500 items just to reach one post
+- Solution: **bidirectional pagination** — when deep-linking to a specific post, fetch a page **centered on that post** (using its ID/cursor as the anchor) rather than starting from page 1, and support loading both *older* and *newer* pages from that anchor point (scroll up loads newer, scroll down loads older)
+- Requires the backend cursor API to support fetching "context around post X," not just sequential pages — worth explicitly flagging as an API contract change: `GET /api/feed?anchor={postId}&before=10&after=10`
+- The virtualization layer also needs to support initializing at an arbitrary scroll offset (not just position 0), which most virtualization libraries support via an `initialScrollOffset`/`scrollToIndex` API
